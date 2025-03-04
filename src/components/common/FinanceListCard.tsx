@@ -1,8 +1,8 @@
 'use client';
 import { FinanceEntryDialog } from '@/components/common/FinanceEntryDialog';
-import clsx from 'clsx';
-
 import { Card } from '@/components/ui/card';
+import { useFinanceEntry } from '@/hooks/use-finance-entry';
+import clsx from 'clsx';
 import { useState } from 'react';
 type FinanceEntry = {
   id?: string;
@@ -13,19 +13,13 @@ type IncomeListCardProps = {
   variant: 'Salary' | 'Category';
 };
 export const FinanceListCard: React.FC<IncomeListCardProps> = ({ variant }) => {
-  const [entry, setEntry] = useState<FinanceEntry[]>([]);
-  const handleAddFinanceEntry = (entry: FinanceEntry) => {
-    console.log('New entry added', entry);
-    // when the user adds a new entry, the title and amount will be displayed in h3 and p tags
-
-    setEntry((prev) => [...prev, entry]);
-  };
+  const { entries, addEntry } = useFinanceEntry();
 
   return (
-    <Card className="p-4 w-[300px]">
+    <Card className="p-4 w-full">
       <h1>{variant === 'Salary' ? 'Income' : 'Categories'}</h1>
-      {entry &&
-        entry.map((entryItem) => {
+      {entries &&
+        entries[variant].map((entryItem) => {
           return (
             <div
               key={entryItem.id}
@@ -49,9 +43,15 @@ export const FinanceListCard: React.FC<IncomeListCardProps> = ({ variant }) => {
           );
         })}
       {variant === 'Salary' ? (
-        <FinanceEntryDialog variant="Salary" onAdd={handleAddFinanceEntry} />
+        <FinanceEntryDialog
+          variant={variant}
+          onAdd={(entry) => addEntry(variant, entry)}
+        />
       ) : (
-        <FinanceEntryDialog variant="Category" onAdd={handleAddFinanceEntry} />
+        <FinanceEntryDialog
+          variant={variant}
+          onAdd={(entry) => addEntry(variant, entry)}
+        />
       )}
     </Card>
   );
