@@ -1,10 +1,9 @@
-import { FinanceEntryDialog } from '@/components/common/FinanceEntryDialog';
+import { IncomeListCard } from '@/components/common/IncomeListCard';
 
 export default function Home() {
   return (
-    <div>
-      <h1>hello</h1>
-      <FinanceEntryDialog variant="Category" />
+    <div className="container mx-auto my-3.5">
+      <IncomeListCard label="Income" />
     </div>
   );
 }
