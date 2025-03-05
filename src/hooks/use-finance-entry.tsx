@@ -1,14 +1,12 @@
 'use client';
+import { FinanceEntryTypes, VARIANT, VariantType } from '@/components/types';
 import { createContext, useContext, useState } from 'react';
 
-type FinanceEntry = {
-  id: string;
-  title?: string;
-  amount?: number;
-};
+type EntriesType = Record<(typeof VARIANT)[VariantType], FinanceEntryTypes[]>;
+
 const FinanceEntryContext = createContext<{
-  entries: { Salary: FinanceEntry[]; Category: FinanceEntry[] };
-  addEntry: (variant: 'Salary' | 'Category', newEntry: FinanceEntry) => void;
+  entries: EntriesType;
+  addEntry: (variant: VariantType, newEntry: FinanceEntryTypes) => void;
 } | null>(null);
 
 export const FinanceEntryProvider = ({
@@ -16,19 +14,20 @@ export const FinanceEntryProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [entries, setEntries] = useState<{
-    Salary: FinanceEntry[];
-    Category: FinanceEntry[];
-  }>({ Salary: [], Category: [] });
-  const addEntry = (variant: 'Salary' | 'Category', newEntry: FinanceEntry) => {
-    const entryWithId: FinanceEntry = {
+  const [entries, setEntries] = useState<EntriesType>({
+    [VARIANT.SALARY]: [],
+    [VARIANT.CATEGORY]: [],
+  });
+
+  const addEntry = (variant: VariantType, newEntry: FinanceEntryTypes) => {
+    const entryWithId: FinanceEntryTypes = {
       ...newEntry,
       id: newEntry.id || Date.now().toString(), // Ensure `id` is assigned
     };
 
     setEntries((prev) => ({
       ...prev,
-      [variant]: [...prev[variant], entryWithId],
+      [VARIANT[variant]]: [...prev[VARIANT[variant]], entryWithId],
     }));
   };
 

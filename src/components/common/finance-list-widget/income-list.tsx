@@ -1,10 +1,7 @@
-type FinanceEntry = {
-  id: string;
-  title?: string;
-  amount?: number;
-};
+import {FinanceEntryTypes} from '@/components/types';
+
 type IncomeListProps = {
-  entry: FinanceEntry;
+  entry: FinanceEntryTypes;
 };
 
 export const IncomeList: React.FC<IncomeListProps> = ({ entry }) => {
