@@ -12,7 +12,7 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 type FinanceEntry = {
-  id?: string;
+  id: string;
   title?: string;
   amount?: number;
 };

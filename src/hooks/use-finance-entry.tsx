@@ -2,13 +2,13 @@
 import { createContext, useContext, useState } from 'react';
 
 type FinanceEntry = {
-  id?: string;
+  id: string;
   title?: string;
   amount?: number;
 };
 const FinanceEntryContext = createContext<{
-  entries: {Salary: FinanceEntry[]; Category: FinanceEntry[]};
-  addEntry: (variant: "Salary" | "Category", newEntry: FinanceEntry) => void;
+  entries: { Salary: FinanceEntry[]; Category: FinanceEntry[] };
+  addEntry: (variant: 'Salary' | 'Category', newEntry: FinanceEntry) => void;
 } | null>(null);
 
 export const FinanceEntryProvider = ({
@@ -16,12 +16,20 @@ export const FinanceEntryProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [entries, setEntries] = useState<{Salary: FinanceEntry[]; Category: FinanceEntry[]}>({Salary:[], Category: [],});
-  const addEntry = (variant: "Salary" | "Category", newEntry: FinanceEntry) => {
+  const [entries, setEntries] = useState<{
+    Salary: FinanceEntry[];
+    Category: FinanceEntry[];
+  }>({ Salary: [], Category: [] });
+  const addEntry = (variant: 'Salary' | 'Category', newEntry: FinanceEntry) => {
+    const entryWithId: FinanceEntry = {
+      ...newEntry,
+      id: newEntry.id || Date.now().toString(), // Ensure `id` is assigned
+    };
+
     setEntries((prev) => ({
-        ...prev,
-        [variant]: [...prev[variant], { ...newEntry, id: Date.now().toString() }],
-      }));
+      ...prev,
+      [variant]: [...prev[variant], entryWithId],
+    }));
   };
 
   return (
