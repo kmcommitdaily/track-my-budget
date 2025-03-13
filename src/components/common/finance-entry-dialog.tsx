@@ -1,5 +1,5 @@
 'use client';
-import { FinanceEntryTypes, VariantType } from '@/components/types';
+import { FinanceEntryTypes, VariantTypeKey } from '@/components/types';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import {
@@ -14,9 +14,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
 type FinanceEntryDialogProps = {
-  open?: boolean;
-  onClose?: () => void;
-  variant: VariantType;
+  variant: VariantTypeKey;
   onAdd?: (entry: FinanceEntryTypes) => void;
 };
 
@@ -24,17 +22,36 @@ export const FinanceEntryDialog: React.FC<FinanceEntryDialogProps> = ({
   variant,
   onAdd,
 }) => {
-  const [title, setTitle] = useState('');
+  // For SALARY, we use companyName instead of title.
+  const [companyName, setCompanyName] = useState('');
   const [amount, setAmount] = useState<number | ''>(0);
 
-  const handleSave = () => {
-    if (!title || !amount) return;
+  const handleSave = async () => {
+    if (variant === 'SALARY' && !companyName) {
+      console.error('Missing company name!');
+      return;
+    }
+    if (!amount) {
+      console.error('Missing amount!');
+      return;
+    }
 
-    onAdd?.({ id: Math.random().toString(36), title, amount: Number(amount) });
+    console.log('Saving entry:', { companyName, amount });
 
-    setTitle('');
+    // Send the correct property based on variant
+    await onAdd?.({
+      id: Math.random().toString(36),
+      ...(variant === 'SALARY'
+        ? { companyName } // For salary, send companyName
+        : { title: companyName }), // For category, you might use title
+      amount: Number(amount),
+    });
+
+    console.log('Entry added! Fetching new data...');
+    setCompanyName('');
     setAmount(0);
   };
+
   return (
     <Dialog>
       <DialogTrigger className="bg-red-400" asChild>
@@ -48,26 +65,28 @@ export const FinanceEntryDialog: React.FC<FinanceEntryDialogProps> = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              {variant === 'SALARY' ? 'Company' : 'Category Title'}
+            <Label htmlFor="companyName" className="text-right">
+              {variant === 'SALARY' ? 'Company Name' : 'Category Title'}
             </Label>
             <Input
-              id="name"
+              id="companyName"
               className="col-span-3"
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setCompanyName(e.target.value)}
+              value={companyName}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
+            <Label htmlFor="amount" className="text-right">
               {variant === 'SALARY' ? 'Salary' : 'Budget'}
             </Label>
             <Input
-              id="username"
+              id="amount"
               className="col-span-3"
               type="number"
               onChange={(e) =>
                 setAmount(e.target.value ? Number(e.target.value) : '')
               }
+              value={amount}
             />
           </div>
           <DialogFooter>

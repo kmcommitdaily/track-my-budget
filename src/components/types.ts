@@ -1,13 +1,12 @@
 export type FinanceEntryTypes = {
   id: string;
-  title?: string;
+  companyName?: string;
   amount?: number;
 };
 
-
 export const VARIANT = {
-    SALARY: 'Salary',
-    CATEGORY: 'Category'
-}
+  SALARY: 'Salary',
+  CATEGORY: 'Category',
+} as const;
 
-export type VariantType = keyof typeof VARIANT
+export type VariantTypeKey = keyof typeof VARIANT;

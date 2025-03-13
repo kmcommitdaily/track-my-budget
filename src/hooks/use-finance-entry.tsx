@@ -1,12 +1,19 @@
 'use client';
-import { FinanceEntryTypes, VARIANT, VariantType } from '@/components/types';
-import { createContext, useContext, useState } from 'react';
 
-type EntriesType = Record<(typeof VARIANT)[VariantType], FinanceEntryTypes[]>;
+import { FinanceEntryTypes, VARIANT, VariantTypeKey } from '@/components/types';
+import { createContext, useContext, useEffect, useState } from 'react';
+
+// ✅ Define Salary Type to avoid implicit 'any' errors
+type VariantTypeValue = (typeof VARIANT)[VariantTypeKey];
+type EntriesType = Record<VariantTypeValue, FinanceEntryTypes[]>;
 
 const FinanceEntryContext = createContext<{
   entries: EntriesType;
-  addEntry: (variant: VariantType, newEntry: FinanceEntryTypes) => void;
+  addEntry: (
+    variant: VariantTypeKey,
+    newEntry: FinanceEntryTypes
+  ) => Promise<void>;
+  removeEntry: (deletedId: string) => void;
 } | null>(null);
 
 export const FinanceEntryProvider = ({
@@ -19,20 +26,78 @@ export const FinanceEntryProvider = ({
     [VARIANT.CATEGORY]: [],
   });
 
-  const addEntry = (variant: VariantType, newEntry: FinanceEntryTypes) => {
-    const entryWithId: FinanceEntryTypes = {
-      ...newEntry,
-      id: newEntry.id || Date.now().toString(), // Ensure `id` is assigned
-    };
-
+  const removeEntry = (deletedId: string) => {
     setEntries((prev) => ({
       ...prev,
-      [VARIANT[variant]]: [...prev[VARIANT[variant]], entryWithId],
+      [VARIANT['SALARY']]: prev[VARIANT['SALARY']].filter(
+        (entry) => entry.id !== deletedId
+      ),
     }));
   };
 
+  // ✅ Fetch salaries from API with proper typing
+  const fetchSalaries = async () => {
+    try {
+      console.log('Fetching salaries...');
+      const res = await fetch('/api/finance');
+      const salaries: FinanceEntryTypes[] = await res.json(); // ✅ Explicitly define type
+      console.log('Salaries fetched:', salaries);
+      setEntries((prev) => ({
+        ...prev,
+        [VARIANT.SALARY]: salaries.map((s: FinanceEntryTypes) => ({
+          id: s.id,
+          companyName: s.companyName ?? 'Unknown Company', // ✅ Ensure title is a string
+          amount: Number(s.amount) || 0, // ✅ Convert amount to number
+        })),
+      }));
+    } catch (error) {
+      console.error('Error fetching salaries:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSalaries(); // ✅ Fetch existing salaries on first render
+  }, []);
+
+  // ✅ Add new salary entry and refetch from DB
+  const addEntry = async (
+    variant: VariantTypeKey,
+    newEntry: FinanceEntryTypes
+  ) => {
+    console.log('Adding new entry:', newEntry); // ✅ Debugging log
+
+    if (variant === 'SALARY') {
+      const res = await fetch('/api/finance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: newEntry.companyName,
+          amount: newEntry.amount,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error('Failed to add entry:', await res.text());
+        return;
+      }
+
+      console.log('Salary added! Fetching updated salaries...'); // ✅ Debugging log
+      await fetchSalaries(); // 🚀 Ensure UI updates immediately
+    } else {
+      const entryWithId: FinanceEntryTypes = {
+        ...newEntry,
+        id: newEntry.id || Date.now().toString(),
+      };
+
+      setEntries((prev) => ({
+        ...prev,
+        [VARIANT[variant]]: [...prev[VARIANT[variant]], entryWithId],
+      }));
+    }
+  };
+
   return (
-    <FinanceEntryContext.Provider value={{ entries, addEntry }}>
+    <FinanceEntryContext.Provider value={{ entries, addEntry, removeEntry }}>
       {children}
     </FinanceEntryContext.Provider>
   );
