@@ -10,7 +10,6 @@ type FinanceListCardProps = {
   variant: VariantTypeKey;
 };
 
-// refactor this, make a separate component for Salary and Category
 export const FinanceListWidget: React.FC<FinanceListCardProps> = ({
   variant,
 }) => {
@@ -38,7 +37,7 @@ export const FinanceListWidget: React.FC<FinanceListCardProps> = ({
       <FinanceEntryDialog
         variant={variant}
         onAdd={async (entry) => {
-          await addEntry(variant, entry); // ✅ Ensure the new entry is saved to the database
+          await addEntry(variant, entry);
         }}
       />
     </Card>

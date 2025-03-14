@@ -7,7 +7,7 @@ type CategoryListProps = {
 export const CategoryList: React.FC<CategoryListProps> = ({ entry }) => {
   return (
     <div className="flex flex-row justify-between items-center">
-      <h3 className="font-bold">{entry.title}</h3>
+      <h3 className="font-bold">{entry.companyName}</h3>
       <p className="text-md">{entry.amount}</p>
     </div>
   );
