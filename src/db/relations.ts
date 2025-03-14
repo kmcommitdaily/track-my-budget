@@ -6,10 +6,10 @@ import {
   incomeTransactionsTable,
   itemsTable,
   salaryTable,
-  usersTable,
+  appUsersTable,
 } from './schema';
 
-export const usersRelations = relations(usersTable, ({ many }) => ({
+export const usersRelations = relations(appUsersTable, ({ many }) => ({
   salaries: many(salaryTable),
   items: many(itemsTable),
   budgets: many(budgetTable),
@@ -22,9 +22,9 @@ export const companyRelations = relations(companyTable, ({ many }) => ({
 }));
 
 export const salaryRelations = relations(salaryTable, ({ one, many }) => ({
-  user: one(usersTable, {
+  user: one(appUsersTable, {
     fields: [salaryTable.user_id],
-    references: [usersTable.id],
+    references: [appUsersTable.id],
   }),
   company: one(companyTable, {
     fields: [salaryTable.company_id],
@@ -36,9 +36,9 @@ export const salaryRelations = relations(salaryTable, ({ one, many }) => ({
 export const incomeTransactionsRelations = relations(
   incomeTransactionsTable,
   ({ one }) => ({
-    user: one(usersTable, {
+    user: one(appUsersTable, {
       fields: [incomeTransactionsTable.user_id],
-      references: [usersTable.id],
+      references: [appUsersTable.id],
     }),
     salary: one(salaryTable, {
       fields: [incomeTransactionsTable.salary_id],
@@ -57,9 +57,9 @@ export const categoriesRelations = relations(categoriesTable, ({ many }) => ({
 }));
 
 export const itemsRelations = relations(itemsTable, ({ one }) => ({
-  user: one(usersTable, {
+  user: one(appUsersTable, {
     fields: [itemsTable.user_id],
-    references: [usersTable.id],
+    references: [appUsersTable.id],
   }),
   category: one(categoriesTable, {
     fields: [itemsTable.category_id],
@@ -68,9 +68,9 @@ export const itemsRelations = relations(itemsTable, ({ one }) => ({
 }));
 
 export const budgetRelations = relations(budgetTable, ({ one }) => ({
-  user: one(usersTable, {
+  user: one(appUsersTable, {
     fields: [budgetTable.user_id],
-    references: [usersTable.id],
+    references: [appUsersTable.id],
   }),
   category: one(categoriesTable, {
     fields: [budgetTable.category_id],
