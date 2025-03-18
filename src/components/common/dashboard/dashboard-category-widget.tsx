@@ -1,11 +1,11 @@
 'use client';
-import { VARIANT, VariantType } from '@/components/types';
+import { VARIANT, VariantTypeKey } from '@/components/types';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { useFinanceEntry } from '@/hooks/use-finance-entry';
 
 type DashboardCategoryWidgetProps = {
-  variant: VariantType;
+  variant: VariantTypeKey;
 };
 
 export const DashboardCategoryWidget: React.FC<
@@ -13,12 +13,12 @@ export const DashboardCategoryWidget: React.FC<
 > = ({ variant }) => {
   const { entries } = useFinanceEntry();
   return (
-    <Card className="p-4 w-[300px]">
+    <Card className="p-4 w-full">
       <h1>Categories</h1>
-      <ul className=" grid grid-cols-4 gap-4">
+      <ul className=" grid grid-cols-4 gap-4 place-items-center">
         {entries[VARIANT[variant]].map((entry) => (
           <li key={entry.id}>
-            <Badge variant="outline">{entry.title}</Badge>
+            <Badge variant="outline">{entry.companyName}</Badge>
           </li>
         ))}
       </ul>
