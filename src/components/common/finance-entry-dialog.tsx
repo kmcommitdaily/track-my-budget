@@ -22,40 +22,43 @@ export const FinanceEntryDialog: React.FC<FinanceEntryDialogProps> = ({
   variant,
   onAdd,
 }) => {
-  // For SALARY, we use companyName instead of title.
   const [companyName, setCompanyName] = useState('');
   const [amount, setAmount] = useState<number | ''>(0);
+  const [open, setOpen] = useState(false); // ✅ Fix: Control Dialog Open State
 
   const handleSave = async () => {
     if (variant === 'SALARY' && !companyName) {
-      console.error('Missing company name!');
+      console.error('❌ Missing company name!');
       return;
     }
     if (!amount) {
-      console.error('Missing amount!');
+      console.error('❌ Missing amount!');
       return;
     }
 
-    console.log('Saving entry:', { companyName, amount });
+    console.log('✅ Saving entry:', { companyName, amount });
 
-    // Send the correct property based on variant
-    await onAdd?.({
-      id: Math.random().toString(36),
+    // ✅ Ensure `onAdd` updates parent state
+    onAdd?.({
+      id: crypto.randomUUID(), // ✅ Fix: Ensure Unique ID
       ...(variant === 'SALARY'
-        ? { companyName } // For salary, send companyName
-        : { title: companyName }), // For category, you might use title
+        ? { companyName } // ✅ Send correct field
+        : { title: companyName }),
       amount: Number(amount),
     });
 
-    console.log('Entry added! Fetching new data...');
+    console.log('✅ Entry added! Fetching new data...');
     setCompanyName('');
     setAmount(0);
+    setOpen(false); // ✅ Fix: Close Dialog on Save
   };
 
   return (
-    <Dialog>
-      <DialogTrigger className="bg-red-400" asChild>
-        <Button>{variant === 'SALARY' ? 'Add Income' : 'Add Category'}</Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button onClick={() => setOpen(true)}>
+          {variant === 'SALARY' ? 'Add Income' : 'Add Category'}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -91,7 +94,7 @@ export const FinanceEntryDialog: React.FC<FinanceEntryDialogProps> = ({
           </div>
           <DialogFooter>
             <Button className="w-100" variant="outline" onClick={handleSave}>
-              save
+              Save
             </Button>
           </DialogFooter>
         </div>

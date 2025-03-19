@@ -40,14 +40,16 @@ export const FinanceEntryProvider = ({
     try {
       console.log('Fetching salaries...');
       const res = await fetch('/api/finance');
-      const salaries: FinanceEntryTypes[] = await res.json(); // ✅ Explicitly define type
+      // Read response as text to check for empty body
+      const text = await res.text();
+      const salaries: FinanceEntryTypes[] = text ? JSON.parse(text) : [];
       console.log('Salaries fetched:', salaries);
       setEntries((prev) => ({
         ...prev,
         [VARIANT.SALARY]: salaries.map((s: FinanceEntryTypes) => ({
           id: s.id,
-          companyName: s.companyName ?? 'Unknown Company', // ✅ Ensure title is a string
-          amount: Number(s.amount) || 0, // ✅ Convert amount to number
+          companyName: s.companyName ?? 'Unknown Company',
+          amount: Number(s.amount) || 0,
         })),
       }));
     } catch (error) {

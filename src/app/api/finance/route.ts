@@ -1,37 +1,20 @@
+import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { createSalary, getSalaries } from '../../../db/repositories/finance';
+import { createSalary } from '../../../db/repositories/finance';
+import { headers } from 'next/headers';
 
-const TEMP_USER_ID = '3e13d656-8e7f-4c94-b1dc-08cd98ef3c14';
-
-// GET - Fetch all salaries
-export async function GET() {
-  try {
-    const salaries = await getSalaries();
-    return NextResponse.json(salaries);
-  } catch (error) {
-    console.error('Error fetching salaries:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch salaries' },
-      { status: 500 }
-    );
-  }
-}
-
-// POST - Add a new salary (with company info)
 export async function POST(req: Request) {
-  try {
-    // Expecting a JSON with companyName and amount
-    const { companyName, amount } = await req.json();
-    await createSalary(TEMP_USER_ID, companyName, amount);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error adding salary:', error);
-    return NextResponse.json(
-      { error: 'Failed to add salary' },
-      { status: 500 }
-    );
+  // Retrieve the session from Better Auth on the server side.
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-}
 
-// const salaries = await getSalaries();
-// console.log('Raw salaries:', JSON.stringify(salaries, null, 2));
+  // Now, get the salary data from the request body.
+  const { companyName, amount } = await req.json();
+  console.log('Creating salary for user:', session.user.id);
+
+  // Use the user ID from the session instead of expecting it from the client.
+  const salaryId = await createSalary(session.user.id, companyName, amount);
+  return NextResponse.json({ success: true, salaryId });
+}

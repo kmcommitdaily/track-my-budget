@@ -54,13 +54,14 @@ export const createSalary = async (
     }
 
     // Insert salary record using the provided userId
+    // Insert salary record using the provided userId
     const [salary] = await db
       .insert(schema.salaryTable)
       .values({
         id: crypto.randomUUID(),
-        amount: amount.toString(), // Convert to string if needed by numeric type
+        amount: amount.toString(),
         company_id: companyId,
-        user_id: '3e13d656-8e7f-4c94-b1dc-08cd98ef3c14', // Use passed-in userId
+        user_id: userId, // Use the parameter here
       })
       .returning({ id: schema.salaryTable.id });
 
@@ -111,4 +112,3 @@ export const deleteSalary = async (salaryId: string) => {
     .delete(schema.salaryTable)
     .where(eq(schema.salaryTable.id, salaryId));
 };
-

@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+ import { relations } from 'drizzle-orm';
 import {
   budgetTable,
   categoriesTable,
@@ -83,3 +83,4 @@ export const budgetRelations = relations(budgetTable, ({ one, many }) => ({
   }),
   items: many(itemsTable), // ✅ New relation (Budget → Expenses)
 }));
+

@@ -8,7 +8,6 @@ import {
   text,
   boolean,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 const timestamps = {
   updated_at: timestamp().defaultNow(),
@@ -88,8 +87,7 @@ export const itemsTable = pgTable('items', {
 export const budgetTable = pgTable('budget', {
   id: uuid('id').primaryKey(),
   amount: numeric('amount', { precision: 10, scale: 2 }),
-  remaining_amount: numeric('remaining_amount', { precision: 10, scale: 2 }) // 🔶 New field
-    .default(sql`amount`), // Start with full budget
+  remaining_amount: numeric('remaining_amount', { precision: 10, scale: 2 }), // 🔶 New field
   user_id: text()
     .references(() => user.id)
     .notNull(),
