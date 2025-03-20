@@ -29,6 +29,9 @@ type FinanceContextType = {
   addIncome: (income: Omit<Income, "id">) => void
   addCategory: (category: Omit<Category, "id">) => void
   addExpense: (expense: Omit<Expense, "id">) => void
+  deleteIncome: (id: string) => void
+  deleteCategory: (id: string) => void
+  deleteExpense: (id: string) => void
   getTotalIncome: () => number
   getTotalExpenses: () => number
   getTotalBudget: () => number
@@ -56,6 +59,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const addExpense = (newExpense: Omit<Expense, "id">) => {
     setExpenses([...expenses, { ...newExpense, id: crypto.randomUUID() }])
+  }
+
+  const deleteIncome = (id: string) => {
+    setIncome(income.filter((item) => item.id !== id))
+  }
+
+  const deleteCategory = (id: string) => {
+    setCategories(categories.filter((category) => category.id !== id))
+    // Also delete all expenses associated with this category
+    setExpenses(expenses.filter((expense) => expense.categoryId !== id))
+  }
+
+  const deleteExpense = (id: string) => {
+    setExpenses(expenses.filter((expense) => expense.id !== id))
   }
 
   const getTotalIncome = () => {
@@ -103,6 +120,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         addIncome,
         addCategory,
         addExpense,
+        deleteIncome,
+        deleteCategory,
+        deleteExpense,
         getTotalIncome,
         getTotalExpenses,
         getTotalBudget,
