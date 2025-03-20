@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sidebar } from "@/components/sidebar"
-import { CalendarCard } from "@/components/calendar-card"
-import { SummaryCard } from "@/components/summary-card"
-import { ExpenseTable } from "@/components/expense-table"
-import { Notepad } from "@/components/notepad"
-import { AddExpenseDialog } from "@/components/add-expense-dialog"
+import { Sidebar } from "@/components/common/sidebar"
+import { CalendarCard } from "@/components/common/calendar-card"
+import { SummaryCard } from "@/components/common/summary-card"
+import { ExpenseTable } from "@/components/common/expense-table"
+import { Notepad } from "@/components/common/notepad"
+import { AddExpenseDialog } from "@/components/common/add-expense-dialog"
 
 interface DashboardLayoutProps {
   sidebarOpen: boolean

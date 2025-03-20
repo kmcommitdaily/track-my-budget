@@ -1,38 +1,44 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useFinance } from "@/components/finance-context"
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useFinance } from '@/components/common/finance-context';
 
 interface AddIncomeDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
-  const [company, setCompany] = useState("")
-  const [amount, setAmount] = useState("")
-  const { addIncome } = useFinance()
+  const [company, setCompany] = useState('');
+  const [amount, setAmount] = useState('');
+  const { addIncome } = useFinance();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (company && amount) {
       addIncome({
         company,
         amount: Number.parseFloat(amount),
-      })
+      });
 
-      setCompany("")
-      setAmount("")
-      onOpenChange(false)
+      setCompany('');
+      setAmount('');
+      onOpenChange(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,6 +81,5 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
