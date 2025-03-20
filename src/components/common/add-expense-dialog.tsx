@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useFinance } from '@/components/common/finance-context';
+import { useFinance } from '@/hooks/finance-context';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,

@@ -1,114 +1,86 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../index';
 import * as schema from '../schema';
+import { createCompany } from '../repositories/company'; // Ensure correct path
 
-// const TEMP_USER_ID = '3e13d656-8e7f-4c94-b1dc-08cd98ef3c14'; // Use only if needed
+/** Generates timestamps for record creation & updates */
+const getTimestamps = () => ({
+  created_at: new Date(),
+  updated_at: new Date(),
+});
 
-// Create a company and return its ID
-export const createCompany = async (name: string) => {
-  const [company] = await db
-    .insert(schema.companyTable)
-    .values({ id: crypto.randomUUID(), name })
-    .returning({ id: schema.companyTable.id });
-  return company?.id;
-};
-
-// Create salary record with associated company and user
+/**
+ * Creates a salary record and ensures it is linked to a company & user.
+ * @param userId - The ID of the user.
+ * @param companyName - The name of the company.
+ * @param amount - The salary amount.
+ * @returns The salary ID if created, otherwise null.
+ */
 export const createSalary = async (
   userId: string,
   companyName: string,
   amount: number
-) => {
-  console.log('🔄 Attempting to insert salary...', {
-    userId,
-    companyName,
-    amount,
-  });
-
+): Promise<string | null> => {
   try {
-    // Check if the company already exists
-    const company = await db
+    // 🔹 Validate inputs
+    if (!userId || !companyName?.trim() || amount <= 0) {
+      console.error('❌ Invalid input:', { userId, companyName, amount });
+      throw new Error(
+        'All fields (userId, companyName, amount) are required and must be valid.'
+      );
+    }
+
+    // 🔹 Ensure company exists (Create if needed)
+    let companyId: string | null;
+    const existingCompany = await db
       .select()
       .from(schema.companyTable)
       .where(eq(schema.companyTable.name, companyName))
       .limit(1);
 
-    console.log('🏢 Company Lookup Result:', company);
-    let companyId = company[0]?.id;
-
-    // Create company if it doesn't exist
-    if (!companyId) {
-      console.log('⚡ Creating new company:', companyName);
+    if (existingCompany.length > 0) {
+      companyId = existingCompany[0].id;
+    } else {
+      console.log(
+        `🏢 Company "${companyName}" not found, creating a new one...`
+      );
       companyId = await createCompany(companyName);
-      console.log('✅ New Company Created with ID:', companyId);
     }
 
-    // Ensure all required fields are present
-    if (!companyId || !userId || !amount) {
-      console.error('❌ Missing required fields:', {
-        companyId,
-        userId,
-        amount,
-      });
-      return null;
+    if (!companyId) {
+      throw new Error('❌ Failed to retrieve or create company.');
     }
 
-    // Insert salary record using the provided userId
-    // Insert salary record using the provided userId
-    const [salary] = await db
-      .insert(schema.salaryTable)
-      .values({
-        id: crypto.randomUUID(),
-        amount: amount.toString(),
+    // 🔹 Transaction: Insert Salary + Link to Income Transactions
+    return await db.transaction(async (tx) => {
+      // 🔹 Insert salary
+      const [salary] = await tx
+        .insert(schema.salaryTable)
+        .values({
+          id: crypto.randomUUID(),
+          amount: amount.toString(), // Convert to string for numeric type in Drizzle
+          company_id: companyId,
+          user_id: userId,
+          ...getTimestamps(),
+        })
+        .returning({ id: schema.salaryTable.id });
+
+      if (!salary?.id) {
+        throw new Error('❌ Failed to insert salary.');
+      }
+
+      // 🔹 Insert into Income Transactions
+      await tx.insert(schema.incomeTransactionsTable).values({
+        user_id: userId,
+        salary_id: salary.id,
         company_id: companyId,
-        user_id: userId, // Use the parameter here
-      })
-      .returning({ id: schema.salaryTable.id });
+      });
 
-    console.log('✅ Inserted Salary:', salary);
-    return salary?.id;
+      console.log(`✅ Salary created successfully: ${salary.id}`);
+      return salary.id;
+    });
   } catch (error) {
-    console.error('🔥 Error inserting salary:', error);
+    console.error('🔥 Failed to create salary:', error);
     return null;
   }
-};
-
-// Get all salaries with associated company name
-export const getSalaries = async () => {
-  return await db
-    .select({
-      id: schema.salaryTable.id,
-      amount: schema.salaryTable.amount,
-      companyName: schema.companyTable.name,
-    })
-    .from(schema.salaryTable)
-    .innerJoin(
-      schema.companyTable,
-      eq(schema.salaryTable.company_id, schema.companyTable.id)
-    );
-};
-
-try {
-  const salaries = await getSalaries();
-  console.log(
-    'Fetched salaries with company name:',
-    JSON.stringify(salaries, null, 2)
-  );
-} catch (error) {
-  console.error('Error fetching salaries:', error);
-}
-
-// Update a salary record's amount
-export const updateSalary = async (salaryId: string, newAmount: number) => {
-  return await db
-    .update(schema.salaryTable)
-    .set({ amount: newAmount.toString() })
-    .where(eq(schema.salaryTable.id, salaryId));
-};
-
-// Delete a salary record
-export const deleteSalary = async (salaryId: string) => {
-  return await db
-    .delete(schema.salaryTable)
-    .where(eq(schema.salaryTable.id, salaryId));
 };

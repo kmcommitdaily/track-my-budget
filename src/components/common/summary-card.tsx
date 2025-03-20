@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFinance } from '@/components/common/finance-context';
+import { useFinance } from '@/hooks/finance-context';
 
 export function SummaryCard() {
   const {

@@ -1,11 +1,10 @@
 'use client';
 
+'use client';
 
-"use client"
+import type React from 'react';
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,81 +12,88 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useFinance } from '@/components/common/finance-context';
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useFinance } from '@/hooks/finance-context';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AddCategoryDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps) {
-  const [title, setTitle] = useState("")
-  const [budget, setBudget] = useState("")
-  const [error, setError] = useState<string | null>(null)
+export function AddCategoryDialog({
+  open,
+  onOpenChange,
+}: AddCategoryDialogProps) {
+  const [title, setTitle] = useState('');
+  const [budget, setBudget] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const { addCategory, getTotalIncome, getTotalBudget } = useFinance()
+  const { addCategory, getTotalIncome, getTotalBudget } = useFinance();
 
   // Reset form when dialog opens or closes
   useEffect(() => {
     if (!open) {
       // Reset form when dialog closes
-      setTitle("")
-      setBudget("")
-      setError(null)
+      setTitle('');
+      setBudget('');
+      setError(null);
     }
-  }, [open])
+  }, [open]);
 
   const validateAndSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    const totalIncome = getTotalIncome()
-    const totalBudget = getTotalBudget()
-    const budgetAmount = Number.parseFloat(budget)
+    const totalIncome = getTotalIncome();
+    const totalBudget = getTotalBudget();
+    const budgetAmount = Number.parseFloat(budget);
 
     // Check if there's any income
     if (totalIncome <= 0) {
-      setError("You need to add income before creating a budget category.")
-      return
+      setError('You need to add income before creating a budget category.');
+      return;
     }
 
     // Check if budget amount is valid
     if (isNaN(budgetAmount) || budgetAmount <= 0) {
-      setError("Please enter a valid budget amount greater than zero.")
-      return
+      setError('Please enter a valid budget amount greater than zero.');
+      return;
     }
 
     // Check if budget exceeds remaining income
-    const remainingIncome = totalIncome - totalBudget
+    const remainingIncome = totalIncome - totalBudget;
     if (budgetAmount > remainingIncome) {
-      setError(`Budget exceeds remaining income. You have $${remainingIncome.toLocaleString()} available.`)
-      return
+      setError(
+        `Budget exceeds remaining income. You have $${remainingIncome.toLocaleString()} available.`
+      );
+      return;
     }
 
     // All validations passed, add the category
     addCategory({
       title,
       budget: budgetAmount,
-    })
+    });
 
     // Reset form and close dialog
-    setTitle("")
-    setBudget("")
-    onOpenChange(false)
-  }
+    setTitle('');
+    setBudget('');
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Category</DialogTitle>
-          <DialogDescription>Create a budget category to track your expenses.</DialogDescription>
+          <DialogDescription>
+            Create a budget category to track your expenses.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={validateAndSubmit}>
@@ -123,7 +129,8 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Available income: ${(getTotalIncome() - getTotalBudget()).toLocaleString()}
+                Available income: $
+                {(getTotalIncome() - getTotalBudget()).toLocaleString()}
               </p>
             </div>
           </div>
@@ -134,6 +141,5 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

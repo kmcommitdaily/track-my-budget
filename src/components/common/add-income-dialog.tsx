@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFinance } from '@/components/common/finance-context';
+import { useFinance } from '@/hooks/finance-context';
 
 interface AddIncomeDialogProps {
   open: boolean;

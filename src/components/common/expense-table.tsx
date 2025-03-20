@@ -37,7 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useFinance } from '../common/finance-context';
+import { useFinance } from '../../hooks/finance-context';
 import { useState } from 'react';
 import {
   AlertDialog,

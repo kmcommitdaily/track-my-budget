@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { AddIncomeDialog } from '../common/add-income-dialog';
 import { AddCategoryDialog } from '../common/add-category-dialog';
-import { useFinance } from '../common/finance-context';
+import { useFinance } from '../../hooks/finance-context';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
