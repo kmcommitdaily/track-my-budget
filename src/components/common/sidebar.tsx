@@ -52,7 +52,7 @@ export function Sidebar({ open }: SidebarProps) {
                     <div key={inc.id} className="rounded-md border p-3">
                       <div className="font-medium">{inc.company}</div>
                       <div className="text-sm text-muted-foreground">
-                        ${inc.amount.toLocaleString()}
+                        ₱{inc.amount.toLocaleString()}
                       </div>
                     </div>
                   ))}
@@ -107,17 +107,17 @@ export function Sidebar({ open }: SidebarProps) {
                         <div className="font-medium">{category.title}</div>
                         <div className="flex justify-between items-center text-sm text-muted-foreground">
                           <span>
-                            Budget: ${category.budget.toLocaleString()}
+                            Budget: ₱{category.budget.toLocaleString()}
                           </span>
                           <span className="flex items-center">
                             {showRemaining ? (
                               <>
-                                <Wallet className="h-3 w-3 mr-1" />$
+                                <Wallet className="h-3 w-3 mr-1" />₱
                                 {remaining.toLocaleString()}
                               </>
                             ) : (
                               <>
-                                <DollarSign className="h-3 w-3 mr-1" />$
+                                <DollarSign className="h-3 w-3 mr-1" />₱
                                 {spent.toLocaleString()}
                               </>
                             )}
@@ -132,7 +132,7 @@ export function Sidebar({ open }: SidebarProps) {
                                 ? 'bg-warning'
                                 : 'bg-primary'
                             }`}
-                            style={{ width: `${percentage}%` }}
+                            style={{ width: `₱{percentage}%` }}
                           />
                         </div>
                       </div>

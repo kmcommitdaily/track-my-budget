@@ -36,7 +36,7 @@ export function ExpenseTable() {
                   <TableCell>{expense.title}</TableCell>
                   <TableCell>{category?.title || 'Unknown'}</TableCell>
                   <TableCell className="text-right">
-                    ${expense.amount.toLocaleString()}
+                    ₱{expense.amount.toLocaleString()}
                   </TableCell>
                 </TableRow>
               );

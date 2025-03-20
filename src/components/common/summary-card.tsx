@@ -25,7 +25,7 @@ export function SummaryCard() {
                 Total Income
               </p>
               <p className="text-2xl font-bold">
-                ${getTotalIncome().toLocaleString()}
+                ₱{getTotalIncome().toLocaleString()}
               </p>
             </div>
             <div>
@@ -33,7 +33,7 @@ export function SummaryCard() {
                 Remaining Income
               </p>
               <p className="text-2xl font-bold">
-                ${getRemainingIncome().toLocaleString()}
+                ₱{getRemainingIncome().toLocaleString()}
               </p>
             </div>
           </div>
@@ -44,7 +44,7 @@ export function SummaryCard() {
                 Total Budget
               </p>
               <p className="text-2xl font-bold">
-                ${getTotalBudget().toLocaleString()}
+                ₱{getTotalBudget().toLocaleString()}
               </p>
             </div>
             <div>
@@ -52,7 +52,7 @@ export function SummaryCard() {
                 Remaining Budget
               </p>
               <p className="text-2xl font-bold">
-                ${getRemainingBudget().toLocaleString()}
+                ₱{getRemainingBudget().toLocaleString()}
               </p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export function SummaryCard() {
               Total Expenses
             </p>
             <p className="text-2xl font-bold">
-              ${getTotalExpenses().toLocaleString()}
+              ₱{getTotalExpenses().toLocaleString()}
             </p>
           </div>
         </div>
