@@ -16,6 +16,34 @@ const getTimestamps = () => ({
  * @param amount - The salary amount.
  * @returns The salary ID if created, otherwise null.
  */
+
+
+export const getSalaries = async (userId: string) => {
+  try {
+    if (!userId) {
+      throw new Error('❌ User ID is required.');
+    }
+
+    // 🔹 Fetch salaries with company name
+    const salaries = await db
+      .select({
+        id: schema.salaryTable.id,
+        amount: schema.salaryTable.amount,
+        company: schema.companyTable.name,
+      })
+      .from(schema.salaryTable)
+      .innerJoin(
+        schema.companyTable,
+        eq(schema.salaryTable.company_id, schema.companyTable.id)
+      )
+      .where(eq(schema.salaryTable.user_id, userId));
+
+    return salaries;
+  } catch (error) {
+    console.error('🔥 Failed to fetch salaries:', error);
+    return [];
+  }
+};
 export const createSalary = async (
   userId: string,
   companyName: string,

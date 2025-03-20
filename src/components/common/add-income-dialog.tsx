@@ -1,7 +1,6 @@
 'use client';
 
 import type React from 'react';
-
 import { useState } from 'react';
 import {
   Dialog,
@@ -23,20 +22,54 @@ interface AddIncomeDialogProps {
 export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
   const [company, setCompany] = useState('');
   const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
   const { addIncome } = useFinance();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (company && amount) {
-      addIncome({
-        company,
-        amount: Number.parseFloat(amount),
+    if (!company.trim() || !amount.trim()) {
+      alert('❌ Please enter a valid company name and amount.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/finance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName: company,
+          amount: parseFloat(amount),
+        }),
       });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add income.');
+      }
+
+      console.log('✅ Salary added successfully:', data.salaryId);
+
+      // Update local state
+      addIncome({
+        company,
+        amount: parseFloat(amount),
+      });
+
+      // Reset fields and close modal
       setCompany('');
       setAmount('');
       onOpenChange(false);
+    } catch (error) {
+      console.error('🔥 Error adding salary:', error);
+      alert(error instanceof Error ? error.message : 'Something went wrong.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,7 +109,9 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
           </div>
 
           <DialogFooter>
-            <Button type="submit">Add Income</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Adding...' : 'Add Income'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
