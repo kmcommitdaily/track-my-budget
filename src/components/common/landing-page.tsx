@@ -10,7 +10,7 @@ export default function LandingPage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 font-bold">
             <BarChart3 className="h-5 w-5" />
-            <span>BudgetTracker</span>
+            <span>everyCents</span>
           </div>
           <nav className="hidden md:flex gap-6">
             <Link
@@ -29,7 +29,9 @@ export default function LandingPage() {
               Pricing
             </Link>
           </nav>
-          <div className="flex items-center gap-4"><LoginButton /></div>
+          <div className="flex items-center gap-4">
+            <LoginButton />
+          </div>
         </div>
       </header>
       <main className="flex-1">
@@ -41,7 +43,7 @@ export default function LandingPage() {
                   Take control of your finances
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Simple, intuitive budget tracking that helps you save more and
+                  Simpler, Smarter, and more Intuitive—helping you save more and
                   spend wisely.
                 </p>
               </div>
@@ -62,7 +64,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                  Everything you need to manage your money
+                  Your search for the perfect budget tracker ends here.
                 </h2>
                 <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Our platform provides all the tools you need to track,
@@ -87,8 +89,8 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Budget Planning</h3>
                 <p className="text-center text-muted-foreground">
-                  Create custom budgets and get alerts when you are approaching
-                  your limits.
+                  Get personalized monthly budget statements to plan smarter and
+                  stay on top of your finances.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-4 rounded-lg border p-6">
@@ -97,8 +99,8 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Financial Insights</h3>
                 <p className="text-center text-muted-foreground">
-                  Get personalized insights and recommendations to improve your
-                  financial health.
+                  Powered by AI, get personalized insights and smart
+                  recommendations to improve your financial health.
                 </p>
               </div>
             </div>
@@ -113,7 +115,7 @@ export default function LandingPage() {
                 </h2>
                 <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Join thousands of users who have transformed their financial
-                  habits with BudgetTracker.
+                  habits with everyCents.
                 </p>
               </div>
               <div className="mx-auto w-full max-w-sm space-y-2">
@@ -129,8 +131,7 @@ export default function LandingPage() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} BudgetTracker. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} everyCents. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link

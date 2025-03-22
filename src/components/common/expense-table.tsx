@@ -1,33 +1,7 @@
-// 'use client';
-
-// import { format } from 'date-fns';
-// import { Trash2 } from 'lucide-react';
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from '@/components/ui/table';
-// import { Button } from '@/components/ui/button';
-// import { useFinance } from '../common/finance-context';
-// import { useState } from 'react';
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-// } from '@/components/ui/alert-dialog';
-
 'use client';
 
 import { format } from 'date-fns';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, Filter } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -55,14 +29,52 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 export function ExpenseTable() {
-  const { expenses, getCategoryById, deleteExpense, getCategoryRemaining } =
-    useFinance();
+  const {
+    expenses,
+    categories,
+    getCategoryById,
+    deleteExpense,
+    getCategoryRemaining,
+  } = useFinance();
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  // Filter expenses based on selected category
+  const filteredExpenses =
+    categoryFilter === 'all'
+      ? expenses
+      : expenses.filter((expense) => expense.categoryId === categoryFilter);
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -76,8 +88,8 @@ export function ExpenseTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.length > 0 ? (
-              expenses.map((expense) => {
+            {filteredExpenses.length > 0 ? (
+              filteredExpenses.map((expense) => {
                 const category = getCategoryById(expense.categoryId);
                 const remaining = category
                   ? getCategoryRemaining(category.id)
@@ -92,7 +104,7 @@ export function ExpenseTable() {
                     <TableCell>{expense.title}</TableCell>
                     <TableCell>{category?.title || 'Unknown'}</TableCell>
                     <TableCell className="text-right">
-                      ₱{expense.amount.toLocaleString()}
+                      ${expense.amount.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       {isBudgetExceeded && (
@@ -106,7 +118,7 @@ export function ExpenseTable() {
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>
-                                Budget exceeded by ₱
+                                Budget exceeded by $
                                 {Math.abs(remaining).toLocaleString()}
                               </p>
                             </TooltipContent>
@@ -132,7 +144,9 @@ export function ExpenseTable() {
                 <TableCell
                   colSpan={6}
                   className="text-center py-6 text-muted-foreground">
-                  No expenses added yet.
+                  {expenses.length === 0
+                    ? 'No expenses added yet.'
+                    : 'No expenses found for the selected category.'}
                 </TableCell>
               </TableRow>
             )}
@@ -159,7 +173,7 @@ export function ExpenseTable() {
                   setDeleteExpenseId(null);
                 }
               }}
-              className="bg-destructive text-white">
+              className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
