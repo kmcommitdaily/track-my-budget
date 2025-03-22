@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusCircle, DollarSign, Wallet, Trash2 } from 'lucide-react';
+import { PlusCircle, DollarSign, Wallet, Trash2 , AlertCircle} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-
+import { Alert, AlertDescription } from "../ui/alert";
 interface SidebarProps {
   open: boolean;
 }
@@ -33,6 +33,7 @@ export function Sidebar({ open }: SidebarProps) {
   const [deleteItemType, setDeleteItemType] = useState<
     'income' | 'category' | null
   >(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const {
     income,
@@ -42,24 +43,40 @@ export function Sidebar({ open }: SidebarProps) {
     deleteIncome,
     deleteCategory,
   } = useFinance();
+  const handleDeleteClick = (id: string, type: "income" | "category") => {
+    setDeleteError(null)
 
-  const handleDeleteClick = (id: string, type: 'income' | 'category') => {
-    setDeleteItemId(id);
-    setDeleteItemType(type);
-  };
-
-  const handleConfirmDelete = () => {
-    if (!deleteItemId || !deleteItemType) return;
-
-    if (deleteItemType === 'income') {
-      deleteIncome(deleteItemId);
-    } else if (deleteItemType === 'category') {
-      deleteCategory(deleteItemId);
+    // Check if this is the only income and there are categories
+    if (type === "income" && income.length === 1 && categories.length > 0) {
+      setDeleteError(
+        "Cannot delete the only income source when budget categories exist. Add another income source first or delete all categories.",
+      )
+      setDeleteItemId(id)
+      setDeleteItemType(type)
+      return
     }
 
-    setDeleteItemId(null);
-    setDeleteItemType(null);
-  };
+    setDeleteItemId(id)
+    setDeleteItemType(type)
+  }
+
+  const handleConfirmDelete = () => {
+    if (!deleteItemId || !deleteItemType || deleteError) {
+      setDeleteItemId(null)
+      setDeleteItemType(null)
+      setDeleteError(null)
+      return
+    }
+
+    if (deleteItemType === "income") {
+      deleteIncome(deleteItemId)
+    } else if (deleteItemType === "category") {
+      deleteCategory(deleteItemId)
+    }
+
+    setDeleteItemId(null)
+    setDeleteItemType(null)
+  }
 
   return (
     <>
@@ -219,25 +236,39 @@ export function Sidebar({ open }: SidebarProps) {
         onOpenChange={setCategoryDialogOpen}
       />
 
-      <AlertDialog
+<AlertDialog
         open={!!deleteItemId}
-        onOpenChange={(open) => !open && setDeleteItemId(null)}>
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteItemId(null)
+            setDeleteItemType(null)
+            setDeleteError(null)
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{deleteError ? "Cannot Delete" : "Are you sure?"}</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteItemType === 'income'
-                ? 'This will delete this income source.'
-                : 'This will delete this category and all associated expenses.'}
+              {deleteError ? (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{deleteError}</AlertDescription>
+                </Alert>
+              ) : deleteItemType === "income" ? (
+                "This will delete this income source."
+              ) : (
+                "This will delete this category and all associated expenses."
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-white">
-              Delete
-            </AlertDialogAction>
+            {!deleteError && (
+              <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
