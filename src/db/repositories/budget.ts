@@ -21,7 +21,7 @@ export const getBudget = async (userId: string) => {
     })
     .from(schema.budgetTable)
     .innerJoin(
-      schema.budgetTable,
+      schema.categoriesTable,
       eq(schema.categoriesTable.id, schema.budgetTable.category_id)
     );
   return budget;

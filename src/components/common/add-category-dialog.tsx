@@ -3,8 +3,8 @@
 'use client';
 
 import type React from 'react';
-
-import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -33,17 +33,32 @@ export function AddCategoryDialog({
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const { addCategory, getTotalIncome, getTotalBudget } = useFinance();
+  const queryClient = useQueryClient();
 
-  // Reset form when dialog opens or closes
-  useEffect(() => {
-    if (!open) {
-      // Reset form when dialog closes
-      setTitle('');
-      setBudget('');
-      setError(null);
-    }
-  }, [open]);
+  const { getTotalIncome, getTotalBudget } = useFinance();
+  const mutation = useMutation({
+    mutationFn: async (newCategory: {
+      categoryTitle: string;
+      amount: number;
+    }) => {
+      const response = await fetch('/api/category-budget', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCategory),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add Category');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget'] });
+    },
+  });
 
   const validateAndSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,20 +67,16 @@ export function AddCategoryDialog({
     const totalIncome = getTotalIncome();
     const totalBudget = getTotalBudget();
     const budgetAmount = Number.parseFloat(budget);
-
-    // Check if there's any income
     if (totalIncome <= 0) {
       setError('You need to add income before creating a budget category.');
       return;
     }
 
-    // Check if budget amount is valid
     if (isNaN(budgetAmount) || budgetAmount <= 0) {
       setError('Please enter a valid budget amount greater than zero.');
       return;
     }
 
-    // Check if budget exceeds remaining income
     const remainingIncome = totalIncome - totalBudget;
     if (budgetAmount > remainingIncome) {
       setError(
@@ -74,18 +85,20 @@ export function AddCategoryDialog({
       return;
     }
 
-    // All validations passed, add the category
-    addCategory({
-      title,
-      budget: budgetAmount,
-    });
-
-    // Reset form and close dialog
-    setTitle('');
-    setBudget('');
-    onOpenChange(false);
+    mutation.mutate(
+      { categoryTitle: title, amount: budgetAmount },
+      {
+        onSuccess: () => {
+          setTitle('');
+          setBudget('');
+          onOpenChange(false);
+        },
+        onError: (error) => {
+          setError(error.message || 'Something went wrong. Pls try again');
+        },
+      }
+    );
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -97,6 +110,7 @@ export function AddCategoryDialog({
         </DialogHeader>
 
         <form onSubmit={validateAndSubmit}>
+          {mutation.isPending && <p>Adding category...</p>}
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -136,7 +150,9 @@ export function AddCategoryDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit">Add Category</Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              Add Category
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -81,6 +81,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     fetchSalaries();
   }, []);
 
+  // Fetch categories when component mounts
+
   const addIncome = (newIncome: Omit<Income, 'id'>) => {
     setIncome([...income, { ...newIncome, id: crypto.randomUUID() }]);
   };
