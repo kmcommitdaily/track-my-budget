@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../index';
 import * as schema from '../schema';
 import { createCompany } from '../repositories/company'; // Ensure correct path
@@ -112,3 +112,77 @@ export const createSalary = async (
     return null;
   }
 };
+
+
+export const deleteSalary = async (
+  salaryId: string,
+  userId: string
+): Promise<boolean> => {
+  if (!salaryId || !userId) throw new Error('Missing salaryId or userId');
+
+  await db.transaction(async (tx) => {
+    // 🔹 Get the salary with company ID
+    const [salary] = await tx
+      .select({
+        companyId: schema.salaryTable.company_id,
+      })
+      .from(schema.salaryTable)
+      .where(eq(schema.salaryTable.id, salaryId));
+
+    if (!salary) throw new Error('Salary not found');
+
+    const companyId = salary.companyId;
+
+    // 🔹 Get all distinct companies for this user
+    const companies = await tx
+      .selectDistinct({ companyId: schema.incomeTransactionsTable.company_id })
+      .from(schema.incomeTransactionsTable)
+      .where(eq(schema.incomeTransactionsTable.user_id, userId));
+
+    if (companies.length <= 1) {
+      // 🔹 Check if user has any budgets
+      const budgets = await tx
+        .select()
+        .from(schema.budgetTable)
+        .where(eq(schema.budgetTable.user_id, userId));
+
+      if (budgets.length > 0) {
+        throw new Error(
+          'Cannot delete your only income source while a budget exists.'
+        );
+      }
+    }
+
+    // 🔹 Delete income transaction
+    await tx
+      .delete(schema.incomeTransactionsTable)
+      .where(
+        and(
+          eq(schema.incomeTransactionsTable.user_id, userId),
+          eq(schema.incomeTransactionsTable.salary_id, salaryId),
+          eq(schema.incomeTransactionsTable.company_id, companyId)
+        )
+      );
+      console.log('✅ Deleted income transaction');
+    // 🔹 Delete salary
+    await tx
+      .delete(schema.salaryTable)
+      .where(eq(schema.salaryTable.id, salaryId));
+      console.log('✅ Deleted salary');
+    // 🔹 Check if any other salaries exist for this company
+    const otherSalaries = await tx
+      .select()
+      .from(schema.salaryTable)
+      .where(eq(schema.salaryTable.company_id, companyId));
+
+    if (otherSalaries.length === 0) {
+      await tx
+        .delete(schema.companyTable)
+        .where(eq(schema.companyTable.id, companyId));
+    }
+    console.log('✅ Deleted company');
+  });
+
+  return true;
+};
+

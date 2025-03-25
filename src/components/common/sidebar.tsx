@@ -22,6 +22,7 @@ import {
 } from '../ui/alert-dialog';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useBudget } from '@/hooks/use-budget';
+import { useDeleteSalary } from '@/hooks/use-delete-salary'; // ✅ new hook
 
 interface SidebarProps {
   open: boolean;
@@ -37,18 +38,21 @@ export function Sidebar({ open }: SidebarProps) {
   >(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const {
-    income,
-    // getTotalIncome,
-    deleteIncome,
-    deleteCategory,
-  } = useFinance();
+  const { income, deleteIncome, deleteCategory } = useFinance();
 
   const {
     data: budgets,
     isLoading: isBudgetLoading,
     error: budgetError,
   } = useBudget();
+
+  const { mutate: deleteSalary } = useDeleteSalary();
+
+  const resetDeleteState = () => {
+    setDeleteItemId(null);
+    setDeleteItemType(null);
+    setDeleteError(null);
+  };
 
   const handleDeleteClick = (id: string, type: 'income' | 'category') => {
     setDeleteError(null);
@@ -73,20 +77,24 @@ export function Sidebar({ open }: SidebarProps) {
 
   const handleConfirmDelete = () => {
     if (!deleteItemId || !deleteItemType || deleteError) {
-      setDeleteItemId(null);
-      setDeleteItemType(null);
-      setDeleteError(null);
+      resetDeleteState();
       return;
     }
 
     if (deleteItemType === 'income') {
-      deleteIncome(deleteItemId);
+      deleteSalary(deleteItemId, {
+        onSuccess: () => {
+          deleteIncome(deleteItemId); // optional local state sync
+          resetDeleteState();
+        },
+        onError: (err) => {
+          setDeleteError(err.message);
+        },
+      });
     } else if (deleteItemType === 'category') {
       deleteCategory(deleteItemId);
+      resetDeleteState();
     }
-
-    setDeleteItemId(null);
-    setDeleteItemType(null);
   };
 
   return (
@@ -241,11 +249,7 @@ export function Sidebar({ open }: SidebarProps) {
       <AlertDialog
         open={!!deleteItemId}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeleteItemId(null);
-            setDeleteItemType(null);
-            setDeleteError(null);
-          }
+          if (!open) resetDeleteState();
         }}>
         <AlertDialogContent>
           <AlertDialogHeader>

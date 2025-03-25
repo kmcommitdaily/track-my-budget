@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { createSalary, getSalaries } from '@/db/repositories/finance'; // Ensure correct path
+import { createSalary, getSalaries, deleteSalary } from '@/db/repositories/finance'; // Ensure correct path
 import { headers } from 'next/headers';
 
 // 🔹 Handle GET request to fetch salaries
@@ -64,3 +64,33 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { salaryId } = await req.json();
+
+    if (!salaryId) {
+      return NextResponse.json(
+        { error: 'Missing salaryId' },
+        { status: 400 }
+      );
+    }
+
+    const result = await deleteSalary(salaryId, session.user.id);
+
+    return NextResponse.json({ success: result });
+  } catch (error) {
+    console.error('🔥 Error deleting salary:', error);
+
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal error' },
+      { status: 500 }
+    );
+  }
+}
+

@@ -55,3 +55,13 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// export async function DELETE(req: Request) {
+//     try {
+//         const session = await auth.api.getSession({ headers: await headers() });
+//     if (!session) {
+//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+//     }
+
+//     }
+// }

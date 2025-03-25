@@ -74,3 +74,37 @@ export const createBudget = async (
     return null;
   }
 };
+
+export const deleteBudget = async (
+  budgetId: string,
+  categoryId: string
+): Promise<boolean> => {
+  if (!budgetId || !categoryId) throw new Error('Missing IDs');
+
+  await db.transaction(async (tx) => {
+    const [existingBudget] = await tx
+      .select()
+      .from(schema.budgetTable)
+      .where(eq(schema.budgetTable.id, budgetId));
+
+    if (!existingBudget) throw new Error('Budget not found');
+
+    await tx
+      .delete(schema.budgetTable)
+      .where(eq(schema.budgetTable.id, budgetId));
+
+    const otherBudgets = await tx
+      .select()
+      .from(schema.budgetTable)
+      .where(eq(schema.budgetTable.category_id, categoryId));
+
+    if (otherBudgets.length === 0) {
+      await tx
+        .delete(schema.categoriesTable)
+        .where(eq(schema.categoriesTable.id, categoryId));
+    }
+  });
+
+  return true;
+};
+
