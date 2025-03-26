@@ -15,6 +15,13 @@
       "when": 1742367150233,
       "tag": "0001_aromatic_infant_terrible",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742969869269,
+      "tag": "0002_yellow_xorn",
+      "breakpoints": true
     }
   ]
 }

@@ -46,11 +46,14 @@ export const incomeTransactionsTable = pgTable(
   'income_transactions',
   {
     user_id: text()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  salary_id: uuid()
-    .references(() => salaryTable.id, { onDelete: 'cascade' }),
-  company_id: uuid()
-    .references(() => companyTable.id, { onDelete: 'cascade' }),
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    salary_id: uuid()
+      .notNull()
+      .references(() => salaryTable.id, { onDelete: 'cascade' }),
+    company_id: uuid()
+      .notNull()
+      .references(() => companyTable.id, { onDelete: 'cascade' }),
   },
   (table) => [
     primaryKey({
@@ -68,7 +71,6 @@ export const categoriesTable = pgTable('categories', {
   ...timestamps,
 });
 
-
 export const itemsTable = pgTable('items', {
   id: uuid('id').primaryKey(),
   name: varchar('name', { length: 255 }),
@@ -80,7 +82,7 @@ export const itemsTable = pgTable('items', {
     .notNull(),
 
   category_id: uuid('category_id')
-    .references(() => categoriesTable.id, { onDelete: 'cascade' }) 
+    .references(() => categoriesTable.id, { onDelete: 'cascade' })
     .notNull(),
 
   budget_id: uuid('budget_id')
@@ -90,16 +92,15 @@ export const itemsTable = pgTable('items', {
   ...timestamps,
 });
 
-
 export const budgetTable = pgTable('budget', {
   id: uuid('id').primaryKey(),
   amount: numeric('amount', { precision: 10, scale: 2 }),
   remaining_amount: numeric('remaining_amount', { precision: 10, scale: 2 }), // 🔶 New field
   user_id: text()
-  .references(() => user.id, { onDelete: 'cascade' }) // 💥 Remove budgets when user is deleted
-  .notNull(),
+    .references(() => user.id, { onDelete: 'cascade' }) // 💥 Remove budgets when user is deleted
+    .notNull(),
   category_id: uuid('category_id')
-  .references(() => categoriesTable.id, { onDelete:  'cascade' })
+    .references(() => categoriesTable.id, { onDelete: 'cascade' })
     .notNull(),
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),

@@ -24,7 +24,8 @@ export const getCategory = async (userId: string) => {
 };
 
 export const createCategory = async (
-  categoryTitle: string
+  categoryTitle: string,
+  userId: string
 ): Promise<string | null> => {
   try {
     if (!categoryTitle?.trim()) {
@@ -45,7 +46,7 @@ export const createCategory = async (
 
     const [newCategory] = await db
       .insert(schema.categoriesTable)
-      .values({ id: crypto.randomUUID(), title: categoryTitle })
+      .values({ id: crypto.randomUUID(), title: categoryTitle,  user_id: userId,   })
       .returning({ id: schema.categoriesTable.id });
 
     if (!newCategory?.id) {

@@ -51,7 +51,7 @@ export const createBudget = async (
       );
       categoryId = existingCategory[0].id;
     } else {
-      categoryId = await createCategory(categoryTitle);
+      categoryId = await createCategory(categoryTitle, userId);
     }
 
     if (!categoryId) {
@@ -107,4 +107,3 @@ export const deleteBudget = async (
 
   return true;
 };
-
