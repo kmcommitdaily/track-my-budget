@@ -4,6 +4,7 @@ export type Budget = {
   id: string;
   amount: string;
   categoryTitle: string;
+  categoryId: string; 
 };
 
 export function useCategoryWithBudget() {

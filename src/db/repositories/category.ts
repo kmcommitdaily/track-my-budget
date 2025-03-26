@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '../index';
 import * as schema from '../schema';
 
-
 export const getCategory = async (userId: string) => {
   try {
     if (!userId) {
@@ -46,7 +45,11 @@ export const createCategory = async (
 
     const [newCategory] = await db
       .insert(schema.categoriesTable)
-      .values({ id: crypto.randomUUID(), title: categoryTitle,  user_id: userId,   })
+      .values({
+        id: crypto.randomUUID(),
+        title: categoryTitle,
+        user_id: userId,
+      })
       .returning({ id: schema.categoriesTable.id });
 
     if (!newCategory?.id) {
@@ -60,7 +63,6 @@ export const createCategory = async (
   }
 };
 
-
 export const deleteCategory = async (
   categoryId: string,
   userId: string
@@ -69,12 +71,17 @@ export const deleteCategory = async (
     throw new Error('Missing categoryId or userId');
   }
 
+  console.log(
+    '💥 Attempting to delete category:',
+    categoryId,
+    'for user:',
+    userId
+  );
+
   const [existingCategory] = await db
     .select()
     .from(schema.categoriesTable)
-    .where(
-      eq(schema.categoriesTable.id, categoryId)
-    );
+    .where(eq(schema.categoriesTable.id, categoryId));
 
   if (!existingCategory) throw new Error('Category not found');
   if (existingCategory.user_id !== userId) {
@@ -83,10 +90,7 @@ export const deleteCategory = async (
 
   await db
     .delete(schema.categoriesTable)
-    .where(
-      eq(schema.categoriesTable.id, categoryId)
-    );
+    .where(eq(schema.categoriesTable.id, categoryId));
 
   return true;
 };
-

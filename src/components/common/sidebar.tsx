@@ -1,13 +1,13 @@
+// Sidebar.tsx
 'use client';
 
 import { useState } from 'react';
-import { PlusCircle, Trash2, AlertCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { AddIncomeDialog } from '../common/add-income-dialog';
 import { AddCategoryDialog } from '../common/add-category-dialog';
-import { useFinance } from '../../hooks/finance-context';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -20,9 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Alert, AlertDescription } from '../ui/alert';
+
 import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
-import { useDeleteSalary } from '@/hooks/use-delete-salary'; // ✅ new hook
+import { useSalaries } from '@/hooks/use-salaries';
 
 interface SidebarProps {
   open: boolean;
@@ -36,64 +36,43 @@ export function Sidebar({ open }: SidebarProps) {
   const [deleteItemType, setDeleteItemType] = useState<
     'income' | 'category' | null
   >(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const { income, deleteIncome, deleteCategory } = useFinance();
 
   const {
     data: budgets,
     isLoading: isBudgetLoading,
     error: budgetError,
+    deleteCategory,
   } = useCategoryWithBudget();
 
-  const { mutate: deleteSalary } = useDeleteSalary();
+  const {
+    data: income,
+    isLoading: isIncomeLoading,
+    error: incomeError,
+    deleteSalary,
+  } = useSalaries();
 
   const resetDeleteState = () => {
     setDeleteItemId(null);
     setDeleteItemType(null);
-    setDeleteError(null);
   };
 
   const handleDeleteClick = (id: string, type: 'income' | 'category') => {
-    setDeleteError(null);
-
-    if (
-      type === 'income' &&
-      income.length === 1 &&
-      budgets &&
-      budgets.length > 0
-    ) {
-      setDeleteError(
-        'Cannot delete the only income source when budget categories exist. Add another income source first or delete all categories.'
-      );
-      setDeleteItemId(id);
-      setDeleteItemType(type);
-      return;
-    }
-
     setDeleteItemId(id);
     setDeleteItemType(type);
   };
 
   const handleConfirmDelete = () => {
-    if (!deleteItemId || !deleteItemType || deleteError) {
-      resetDeleteState();
-      return;
-    }
+    if (!deleteItemId || !deleteItemType) return;
+    console.log('🔥 Deleting category with ID:', deleteItemId);
 
     if (deleteItemType === 'income') {
       deleteSalary(deleteItemId, {
-        onSuccess: () => {
-          deleteIncome(deleteItemId); // optional local state sync
-          resetDeleteState();
-        },
-        onError: (err) => {
-          setDeleteError(err.message);
-        },
+        onSuccess: resetDeleteState,
       });
     } else if (deleteItemType === 'category') {
-      deleteCategory(deleteItemId);
-      resetDeleteState();
+      deleteCategory(deleteItemId, {
+        onSuccess: resetDeleteState,
+      });
     }
   };
 
@@ -122,7 +101,7 @@ export function Sidebar({ open }: SidebarProps) {
                 </Button>
               </div>
 
-              {income.length > 0 ? (
+              {income && income.length > 0 ? (
                 <div className="space-y-2">
                   {income.map((inc) => (
                     <div
@@ -138,10 +117,17 @@ export function Sidebar({ open }: SidebarProps) {
                         className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleDeleteClick(inc.id, 'income')}>
                         <Trash2 className="h-3 w-3 text-destructive" />
-                        <span className="sr-only">Delete Income</span>
                       </Button>
                     </div>
                   ))}
+                </div>
+              ) : isIncomeLoading ? (
+                <div className="text-sm text-muted-foreground">
+                  Loading income…
+                </div>
+              ) : incomeError ? (
+                <div className="text-sm text-destructive">
+                  {incomeError.message}
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">
@@ -152,7 +138,7 @@ export function Sidebar({ open }: SidebarProps) {
 
             <Separator className="my-4" />
 
-            {/* Categories Section (from useBudget) */}
+            {/* Categories Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium">Categories</h3>
@@ -161,7 +147,6 @@ export function Sidebar({ open }: SidebarProps) {
                   size="icon"
                   onClick={() => setCategoryDialogOpen(true)}>
                   <PlusCircle className="h-4 w-4" />
-                  <span className="sr-only">Add Category</span>
                 </Button>
               </div>
 
@@ -178,46 +163,31 @@ export function Sidebar({ open }: SidebarProps) {
 
               {budgets && budgets.length > 0 ? (
                 <div className="space-y-2">
-                  {budgets.map((budget) => {
-                    const percentage = 100; // Replace if you later track spent
-
-                    return (
-                      <div
-                        key={budget.id}
-                        className="rounded-md border p-3 relative group">
-                        <div className="font-medium">
-                          {budget.categoryTitle}
-                        </div>
-                        <div className="flex justify-between items-center text-sm text-muted-foreground">
-                          <span>
-                            Budget: ₱{Number(budget.amount).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${
-                              percentage >= 100
-                                ? 'bg-destructive'
-                                : percentage > 75
-                                ? 'bg-warning'
-                                : 'bg-primary'
-                            }`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() =>
-                            handleDeleteClick(budget.id, 'category')
-                          }>
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                          <span className="sr-only">Delete Category</span>
-                        </Button>
+                  {budgets.map((budget) => (
+                    <div
+                      key={budget.id}
+                      className="rounded-md border p-3 relative group">
+                      <div className="font-medium">{budget.categoryTitle}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Budget: ₱{Number(budget.amount).toLocaleString()}
                       </div>
-                    );
-                  })}
+                      <div className="mt-2 h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary"
+                          style={{ width: `100%` }}
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() =>
+                          handleDeleteClick(budget.categoryId, 'category')
+                        }>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               ) : isBudgetLoading ? (
                 <div className="text-sm text-muted-foreground">
@@ -248,36 +218,23 @@ export function Sidebar({ open }: SidebarProps) {
 
       <AlertDialog
         open={!!deleteItemId}
-        onOpenChange={(open) => {
-          if (!open) resetDeleteState();
-        }}>
+        onOpenChange={(open) => !open && resetDeleteState()}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {deleteError ? 'Cannot Delete' : 'Are you sure?'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteError ? (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{deleteError}</AlertDescription>
-                </Alert>
-              ) : deleteItemType === 'income' ? (
-                'This will delete this income source.'
-              ) : (
-                'This will delete this category and all associated expenses.'
-              )}
+              {deleteItemType === 'income'
+                ? 'This will delete this income source.'
+                : 'This will delete this category and all associated expenses.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            {!deleteError && (
-              <AlertDialogAction
-                onClick={handleConfirmDelete}
-                className="bg-destructive text-destructive-foreground">
-                Delete
-              </AlertDialogAction>
-            )}
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

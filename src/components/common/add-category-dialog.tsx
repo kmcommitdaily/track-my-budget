@@ -1,9 +1,7 @@
 'use client';
 
-'use client';
-
 import type React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { useState } from 'react';
 import {
   Dialog,
@@ -20,6 +18,8 @@ import { useFinance } from '@/hooks/finance-context';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
+
 interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,32 +33,9 @@ export function AddCategoryDialog({
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-
   const { getTotalIncome, getTotalBudget } = useFinance();
-  const mutation = useMutation({
-    mutationFn: async (newCategory: {
-      categoryTitle: string;
-      amount: number;
-    }) => {
-      const response = await fetch('/api/category-budget', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newCategory),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add Category');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['category-with-budget'] });
-    },
-  });
+  const { createCategory, isCreating, createError } = useCategoryWithBudget();
 
   const validateAndSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +62,7 @@ export function AddCategoryDialog({
       return;
     }
 
-    mutation.mutate(
+    createCategory(
       { categoryTitle: title, amount: budgetAmount },
       {
         onSuccess: () => {
@@ -93,8 +70,9 @@ export function AddCategoryDialog({
           setBudget('');
           onOpenChange(false);
         },
-        onError: (error) => {
-          setError(error.message || 'Something went wrong. Pls try again');
+
+        onError: (err) => {
+          setError(err.message || 'Something went wrong. Try again');
         },
       }
     );
@@ -110,11 +88,13 @@ export function AddCategoryDialog({
         </DialogHeader>
 
         <form onSubmit={validateAndSubmit}>
-          {mutation.isPending && <p>Adding category...</p>}
+          {isCreating && <p>Adding category...</p>}
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error || createError?.message}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -150,7 +130,7 @@ export function AddCategoryDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={isCreating}>
               Add Category
             </Button>
           </DialogFooter>

@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFinance } from '@/hooks/finance-context';
+import { useSalaries } from '@/hooks/use-salaries'; // ✅ use your query hook
 
 interface AddIncomeDialogProps {
   open: boolean;
@@ -22,10 +22,10 @@ interface AddIncomeDialogProps {
 export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
   const [company, setCompany] = useState('');
   const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { addIncome } = useFinance();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { createSalary, isCreating } = useSalaries(); // ✅ from query hook
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!company.trim() || !amount.trim()) {
@@ -33,44 +33,22 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/finance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          companyName: company,
-          amount: parseFloat(amount),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to add income.');
-      }
-
-      console.log('✅ Salary added successfully:', data.salaryId);
-
-      // Update local state
-      addIncome({
-        company,
+    createSalary(
+      {
+        companyName: company,
         amount: parseFloat(amount),
-      });
-
-      // Reset fields and close modal
-      setCompany('');
-      setAmount('');
-      onOpenChange(false);
-    } catch (error) {
-      console.error('🔥 Error adding salary:', error);
-      alert(error instanceof Error ? error.message : 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setCompany('');
+          setAmount('');
+          onOpenChange(false); // ✅ closes dialog
+        },
+        onError: (err) => {
+          alert(err.message || 'Something went wrong.');
+        },
+      }
+    );
   };
 
   return (
@@ -109,8 +87,8 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Income'}
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? 'Adding...' : 'Add Income'}
             </Button>
           </DialogFooter>
         </form>
