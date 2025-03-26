@@ -56,7 +56,7 @@ export function AddCategoryDialog({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budget'] });
+      queryClient.invalidateQueries({ queryKey: ['category-with-budget'] });
     },
   });
 

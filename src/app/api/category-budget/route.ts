@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { createBudget, getBudget } from '@/db/repositories/budget';
+import { deleteCategory } from '@/db/repositories/category';
 import { headers } from 'next/headers';
 
 export async function GET() {
@@ -56,12 +57,32 @@ export async function POST(req: Request) {
   }
 }
 
-// export async function DELETE(req: Request) {
-//     try {
-//         const session = await auth.api.getSession({ headers: await headers() });
-//     if (!session) {
-//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-//     }
+export async function DELETE(req: Request) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
 
-//     }
-// }
+    if (!session) {
+      return NextResponse.json({ Error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { categoryId } = await req.json();
+
+    if (!categoryId) {
+      return NextResponse.json(
+        { error: 'Missing categoryId' },
+        { status: 400 }
+      );
+    }
+
+    const result = await deleteCategory(categoryId, session.user.id);
+
+    return NextResponse.json({ success: result });
+  } catch (error) {
+    console.error('🔥 Error deleting category:', error);
+
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal error' },
+      { status: 500 }
+    );
+  }
+}

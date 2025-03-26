@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from '../ui/alert-dialog';
 import { Alert, AlertDescription } from '../ui/alert';
-import { useBudget } from '@/hooks/use-budget';
+import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
 import { useDeleteSalary } from '@/hooks/use-delete-salary'; // ✅ new hook
 
 interface SidebarProps {
@@ -44,7 +44,7 @@ export function Sidebar({ open }: SidebarProps) {
     data: budgets,
     isLoading: isBudgetLoading,
     error: budgetError,
-  } = useBudget();
+  } = useCategoryWithBudget();
 
   const { mutate: deleteSalary } = useDeleteSalary();
 

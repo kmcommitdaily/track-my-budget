@@ -59,3 +59,34 @@ export const createCategory = async (
     return null;
   }
 };
+
+
+export const deleteCategory = async (
+  categoryId: string,
+  userId: string
+): Promise<boolean> => {
+  if (!categoryId || !userId) {
+    throw new Error('Missing categoryId or userId');
+  }
+
+  const [existingCategory] = await db
+    .select()
+    .from(schema.categoriesTable)
+    .where(
+      eq(schema.categoriesTable.id, categoryId)
+    );
+
+  if (!existingCategory) throw new Error('Category not found');
+  if (existingCategory.user_id !== userId) {
+    throw new Error('Unauthorized: category does not belong to user');
+  }
+
+  await db
+    .delete(schema.categoriesTable)
+    .where(
+      eq(schema.categoriesTable.id, categoryId)
+    );
+
+  return true;
+};
+
