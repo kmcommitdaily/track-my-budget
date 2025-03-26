@@ -34,10 +34,10 @@ export const salaryTable = pgTable('salary', {
   id: uuid('id').primaryKey(),
   amount: numeric('amount', { precision: 10, scale: 2 }),
   company_id: uuid()
-    .references(() => companyTable.id)
+    .references(() => companyTable.id, { onDelete: 'cascade' })
     .notNull(),
   user_id: text()
-    .references(() => user.id)
+    .references(() => user.id, { onDelete: 'cascade' }) //
     .notNull(),
   ...timestamps,
 });
@@ -46,14 +46,11 @@ export const incomeTransactionsTable = pgTable(
   'income_transactions',
   {
     user_id: text()
-      .references(() => user.id)
-      .notNull(),
-    salary_id: uuid()
-      .references(() => salaryTable.id)
-      .notNull(),
-    company_id: uuid()
-      .references(() => companyTable.id)
-      .notNull(),
+    .references(() => user.id, { onDelete: 'cascade' }),
+  salary_id: uuid()
+    .references(() => salaryTable.id, { onDelete: 'cascade' }),
+  company_id: uuid()
+    .references(() => companyTable.id, { onDelete: 'cascade' }),
   },
   (table) => [
     primaryKey({
@@ -65,34 +62,44 @@ export const incomeTransactionsTable = pgTable(
 export const categoriesTable = pgTable('categories', {
   id: uuid('id').primaryKey(),
   title: varchar('title', { length: 255 }),
+  user_id: text()
+    .references(() => user.id, { onDelete: 'cascade' })
+    .notNull(),
   ...timestamps,
 });
+
 
 export const itemsTable = pgTable('items', {
   id: uuid('id').primaryKey(),
   name: varchar('name', { length: 255 }),
   price: numeric('price', { precision: 10, scale: 2 }),
   quantity: numeric('quantity', { precision: 10, scale: 2 }),
+
   user_id: text()
-    .references(() => user.id)
+    .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
+
   category_id: uuid('category_id')
-    .references(() => categoriesTable.id)
+    .references(() => categoriesTable.id, { onDelete: 'cascade' }) 
     .notNull(),
-  budget_id: uuid('budget_id') // 🔶 New field to track spending against budgets
-    .references(() => budgetTable.id),
+
+  budget_id: uuid('budget_id')
+    .references(() => budgetTable.id, { onDelete: 'cascade' })
+    .notNull(),
+
   ...timestamps,
 });
+
 
 export const budgetTable = pgTable('budget', {
   id: uuid('id').primaryKey(),
   amount: numeric('amount', { precision: 10, scale: 2 }),
   remaining_amount: numeric('remaining_amount', { precision: 10, scale: 2 }), // 🔶 New field
   user_id: text()
-    .references(() => user.id)
-    .notNull(),
+  .references(() => user.id, { onDelete: 'cascade' }) // 💥 Remove budgets when user is deleted
+  .notNull(),
   category_id: uuid('category_id')
-    .references(() => categoriesTable.id)
+  .references(() => categoriesTable.id, { onDelete:  'cascade' })
     .notNull(),
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),
