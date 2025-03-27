@@ -4,7 +4,7 @@ export type Budget = {
   id: string;
   amount: string;
   categoryTitle: string;
-  categoryId: string; 
+  categoryId: string;
 };
 
 export function useCategoryWithBudget() {
@@ -22,7 +22,11 @@ export function useCategoryWithBudget() {
     },
   });
 
-  const createCategory= useMutation({
+  const totalBudget =
+    query.data?.reduce((total, budget) => total + Number(budget.amount), 0) ||
+    0;
+
+  const createCategory = useMutation({
     mutationFn: async (newCategory: {
       categoryTitle: string;
       amount: number;
@@ -67,6 +71,7 @@ export function useCategoryWithBudget() {
 
   return {
     ...query,
+    totalBudget,
     createCategory: createCategory.mutate,
     deleteCategory: deleteCategory.mutate,
     isCreating: createCategory.isPending,
