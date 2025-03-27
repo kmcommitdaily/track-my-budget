@@ -2,16 +2,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFinance } from '@/hooks/finance-context';
+import { useSalaries } from '@/hooks/use-salaries';
 
 export function SummaryCard() {
   const {
-    getTotalIncome,
     getTotalBudget,
     getTotalExpenses,
     getRemainingBudget,
     getRemainingIncome,
   } = useFinance();
 
+  const { totalIncome } = useSalaries();
   return (
     <Card>
       <CardHeader>
@@ -24,9 +25,7 @@ export function SummaryCard() {
               <p className="text-sm font-medium text-muted-foreground">
                 Total Income
               </p>
-              <p className="text-2xl font-bold">
-                ₱{getTotalIncome().toLocaleString()}
-              </p>
+              <p className="text-2xl font-bold">₱{totalIncome}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">

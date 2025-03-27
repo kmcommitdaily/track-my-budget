@@ -1,53 +1,50 @@
-import {useQuery, useQueryClient, useMutation} from "@tanstack/react-query"
-
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 export type Salary = {
-    id: string;
-    company: string;
-    amount: number
-}
+  id: string;
+  company: string;
+  amount: number;
+};
 
 export function useSalaries() {
-   const  queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
-const query = useQuery<Salary[], Error>({
+  const query = useQuery<Salary[], Error>({
     queryKey: ['salary'],
     queryFn: async () => {
-        const response = await fetch('/api/finance')
+      const response = await fetch('/api/finance');
 
-        if(!response.ok)
-            throw new Error("failed to fetch salary")
-        const data = await response.json()
-         return data.salaries as Salary[]
-    }
-})
+      if (!response.ok) throw new Error('failed to fetch salary');
+      const data = await response.json();
+      return data.salaries as Salary[];
+    },
+  });
 
+  const totalIncome =
+    query.data?.reduce((total, salary) => total + Number(salary.amount), 0) ||
+    0;
 
-const createSalary = useMutation({
-    mutationFn: async (newSalary: {
-        companyName: string,
-        amount: number
-    } ) => {
-        const response = await fetch('/api/finance', {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(newSalary)
-        })
+  const createSalary = useMutation({
+    mutationFn: async (newSalary: { companyName: string; amount: number }) => {
+      const response = await fetch('/api/finance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSalary),
+      });
 
-        if(!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || "failed to add salary")
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'failed to add salary');
+      }
 
-        return response.json()
+      return response.json();
     },
     onSuccess: () => {
-        queryClient.invalidateQueries({queryKey: ['salary']})
-    }
-})
+      queryClient.invalidateQueries({ queryKey: ['salary'] });
+    },
+  });
 
-
-const deleteSalary = useMutation({
+  const deleteSalary = useMutation({
     mutationFn: async (salaryId: string) => {
       const response = await fetch('/api/finance', {
         method: 'DELETE',
@@ -67,16 +64,14 @@ const deleteSalary = useMutation({
     },
   });
 
-return {
+  return {
     ...query,
+    totalIncome,
     createSalary: createSalary.mutate,
     deleteSalary: deleteSalary.mutate,
     isCreating: createSalary.isPending,
     createError: createSalary.error,
     isDeleting: deleteSalary.isPending,
     deleteError: deleteSalary.error,
+  };
 }
-
-}
-
-
