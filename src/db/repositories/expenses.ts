@@ -1,6 +1,7 @@
 import { db } from '../index';
 import * as schema from '../schema';
 import { eq, and } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 const getTimestamps = () => ({
   created_at: new Date(),
@@ -16,16 +17,34 @@ export const getItemExpenses = async (userId: string) => {
     const itemExpenses = await db
       .select({
         id: schema.itemsTable.id,
-        name: schema.itemsTable.name,
+        itemName: schema.itemsTable.name,
         price: schema.itemsTable.price,
         categoryId: schema.itemsTable.category_id,
+        createdAt: schema.itemsTable.created_at,
         budgetId: schema.itemsTable.budget_id,
+        budgetAmount: schema.budgetTable.amount,
+        remainingBudget: sql`
+        ${schema.budgetTable.amount} - COALESCE((
+          SELECT SUM(${schema.itemsTable.price})
+          FROM ${schema.itemsTable}
+          WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
+        ), 0)`.as('remainingBudget'),
+        categoryTitle: schema.categoriesTable.title, // 👈 grab it from join
       })
-      .from(schema.itemsTable);
+      .from(schema.itemsTable)
+      .innerJoin(
+        schema.budgetTable,
+        eq(schema.itemsTable.budget_id, schema.budgetTable.id)
+      )
+      .innerJoin(
+        schema.categoriesTable,
+        eq(schema.itemsTable.category_id, schema.categoriesTable.id)
+      ) // 👈 join here
+      .where(eq(schema.itemsTable.user_id, userId));
 
     return itemExpenses;
   } catch (error) {
-    console.error(error);
+    console.error('🔥 getItemExpenses error:', error);
     return null;
   }
 };
@@ -45,6 +64,7 @@ export const createItemExpenses = async (
       .select()
       .from(schema.budgetTable)
       .where(eq(schema.budgetTable.category_id, categoryId));
+    console.log('[🔍 Budget Lookup]', categoryId, existingBudget);
 
     if (!existingBudget.length) {
       throw new Error('no budget found in this category');
@@ -54,7 +74,7 @@ export const createItemExpenses = async (
       .values({
         id: crypto.randomUUID(),
         name: itemName,
-        price: price.toString(),
+        price: price.toFixed(2),
         category_id: categoryId,
         budget_id: existingBudget[0].id,
         user_id: userId,

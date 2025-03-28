@@ -1,7 +1,5 @@
 'use client';
 
-import type React from 'react';
-
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -21,19 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useFinance } from '@/hooks/finance-context';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { AlertCircle, AlertTriangle, CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
 import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
+import { useItemExpenses } from '@/hooks/use-item-expenses';
 
 interface AddExpenseDialogProps {
   open: boolean;
@@ -47,22 +36,22 @@ export function AddExpenseDialog({
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const { addExpense, getCategoryRemaining, getCategoryById } = useFinance();
-
   const { data: categories } = useCategoryWithBudget();
+  const { createItemExpenses } = useItemExpenses();
 
-  // Reset form when dialog opens or closes
+  const selectedCategory = categories?.find((c) => c.categoryId === categoryId);
+  const remainingBudget = selectedCategory
+    ? Number(selectedCategory.remainingAmount)
+    : 0;
+
   useEffect(() => {
     if (!open) {
-      // Reset form when dialog closes
       setTitle('');
       setAmount('');
       setCategoryId('');
-      setDate(new Date());
       setError(null);
       setWarning(null);
     }
@@ -73,46 +62,33 @@ export function AddExpenseDialog({
     setError(null);
     setWarning(null);
 
-    // Check if a category is selected
+    const expenseAmount = Number.parseFloat(amount);
+
     if (!categoryId) {
       setError('Please select a category.');
       return;
     }
 
-    const expenseAmount = Number.parseFloat(amount);
-
-    // Check if amount is valid
     if (isNaN(expenseAmount) || expenseAmount <= 0) {
       setError('Please enter a valid amount greater than zero.');
       return;
     }
 
-    // Check if expense exceeds remaining category budget (warning only)
-    const remainingBudget = getCategoryRemaining(categoryId);
-    const category = getCategoryById(categoryId);
-
     if (expenseAmount > remainingBudget) {
       setWarning(
-        `This expense will exceed your budget for ${
-          category?.title
-        }. You only have $${remainingBudget.toLocaleString()} left.`
+        `This expense will exceed your budget for ${selectedCategory?.categoryTitle}. You only have ₱${remainingBudget.toLocaleString()} left.`
       );
-      // Continue with submission - don't return
     }
 
-    // Add the expense
-    addExpense({
-      title,
-      amount: expenseAmount,
+    createItemExpenses({
+      itemName: title,
       categoryId,
-      date,
+      price: expenseAmount,
     });
 
-    // Reset form and close dialog
     setTitle('');
     setAmount('');
     setCategoryId('');
-    setDate(new Date());
     setError(null);
     setWarning(null);
     onOpenChange(false);
@@ -173,20 +149,13 @@ export function AddExpenseDialog({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories && categories.length > 0 ? (
-                    categories.map((category) => {
-                      const remaining = getCategoryRemaining(
-                        category.categoryId
-                      );
-                      return (
-                        <SelectItem
-                          key={category.categoryId}
-                          value={category.id}>
-                          {category.categoryTitle} (₱
-                          {remaining.toLocaleString()} left)
-                        </SelectItem>
-                      );
-                    })
+                  {categories?.length ? (
+                    categories.map((category) => (
+                      <SelectItem key={category.categoryId} value={category.categoryId}>
+                        {category.categoryTitle} (₱
+                        {Number(category.remainingAmount).toLocaleString()} left)
+                      </SelectItem>
+                    ))
                   ) : (
                     <SelectItem value="none" disabled>
                       No categories available
@@ -205,21 +174,6 @@ export function AddExpenseDialog({
                 onChange={(e) => {
                   setAmount(e.target.value);
                   setWarning(null);
-
-                  // Show warning if amount exceeds budget
-                  if (categoryId) {
-                    const inputAmount = Number.parseFloat(e.target.value);
-                    const remaining = getCategoryRemaining(categoryId);
-                    const category = getCategoryById(categoryId);
-
-                    if (!isNaN(inputAmount) && inputAmount > remaining) {
-                      setWarning(
-                        `This expense will exceed your budget for ${
-                          category?.title
-                        }. You only have $${remaining.toLocaleString()} left.`
-                      );
-                    }
-                  }
                 }}
                 placeholder="Enter amount"
                 min="0"
@@ -229,41 +183,16 @@ export function AddExpenseDialog({
               {categoryId && (
                 <p className="text-xs text-muted-foreground">
                   Available in this category: ₱
-                  {getCategoryRemaining(categoryId).toLocaleString()}
+                  {remainingBudget.toLocaleString()}
                 </p>
               )}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !date && 'text-muted-foreground'
-                    )}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(date) => date && setDate(date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
 
           <DialogFooter>
             <Button
               type="submit"
-              disabled={categories && categories.length === 0}>
+              disabled={!categories || categories.length === 0}>
               Add Expense
             </Button>
           </DialogFooter>

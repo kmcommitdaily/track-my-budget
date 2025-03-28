@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 export type Budget = {
   id: string;
   amount: string;
+  remainingAmount: string
   categoryTitle: string;
   categoryId: string;
 };
@@ -25,6 +26,13 @@ export function useCategoryWithBudget() {
   const totalBudget =
     query.data?.reduce((total, budget) => total + Number(budget.amount), 0) ||
     0;
+
+    const remainingBudget =
+  query.data?.reduce(
+    (total, budget) => total + Number(budget.remainingAmount),
+    0
+  ) || 0;
+
 
   const createCategory = useMutation({
     mutationFn: async (newCategory: {
@@ -72,6 +80,7 @@ export function useCategoryWithBudget() {
   return {
     ...query,
     totalBudget,
+    remainingBudget,
     createCategory: createCategory.mutate,
     deleteCategory: deleteCategory.mutate,
     isCreating: createCategory.isPending,

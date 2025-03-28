@@ -1,25 +1,31 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
-export type itemExpenses = {
+export type ItemExpenses = {
   id: string;
   itemName: string;
-  categoryId: string;
   price: number;
+  categoryId: string;
+  budgetId: string;
+  createdAt: string;
+  budgetAmount: string;
+  remainingBudget: string;
+  categoryTitle: string;
+
 };
 
 export function useItemExpenses() {
   const queryClient = useQueryClient();
 
-  const query = useQuery<itemExpenses[] | Error>({
+  const query = useQuery<ItemExpenses[]>({
     queryKey: ['item-expenses'],
     queryFn: async () => {
-      const response = await fetch('/api/expenses');
+      const response = await fetch('/api/expense');
 
       if (!response.ok) throw new Error('fetch to fetch items expenses');
 
       const data = await response.json();
 
-      return data.itemExpenses as itemExpenses[];
+      return data.itemExpenses as ItemExpenses[];
     },
   });
 
@@ -29,7 +35,7 @@ export function useItemExpenses() {
       categoryId: string;
       price: number;
     }) => {
-      const response = await fetch('api/expenses', {
+      const response = await fetch('/api/expense', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newItemExpenses),

@@ -11,7 +11,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useFinance } from '../../hooks/finance-context';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -36,23 +35,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { useItemExpenses } from '@/hooks/use-item-expenses';
 
 export function ExpenseTable() {
-  const {
-    expenses,
-    categories,
-    getCategoryById,
-    deleteExpense,
-    getCategoryRemaining,
-  } = useFinance();
+  const { data: items = [], deleteItemExpenses } = useItemExpenses();
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  // Filter expenses based on selected category
-  const filteredExpenses =
+  // Filter expenses by categoryId
+  const filtered =
     categoryFilter === 'all'
-      ? expenses
-      : expenses.filter((expense) => expense.categoryId === categoryFilter);
+      ? items
+      : items.filter((item) => item.categoryId === categoryFilter);
+
+  const uniqueCategories = Array.from(
+    new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
+  );
 
   return (
     <>
@@ -65,9 +63,9 @@ export function ExpenseTable() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.title}
+              {uniqueCategories.map(([id, title]) => (
+                <SelectItem key={id} value={id}>
+                  {title}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -88,23 +86,24 @@ export function ExpenseTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredExpenses.length > 0 ? (
-              filteredExpenses.map((expense) => {
-                const category = getCategoryById(expense.categoryId);
-                const remaining = category
-                  ? getCategoryRemaining(category.id)
-                  : 0;
+            {filtered.length > 0 ? (
+              filtered.map((item) => {
+                const remaining = Number(item.remainingBudget);
                 const isBudgetExceeded = remaining < 0;
 
                 return (
                   <TableRow
-                    key={expense.id}
+                    key={item.id}
                     className={isBudgetExceeded ? 'bg-destructive/10' : ''}>
-                    <TableCell>{format(expense.date, 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{expense.title}</TableCell>
-                    <TableCell>{category?.title || 'Unknown'}</TableCell>
+                    <TableCell>
+                      {item.createdAt
+                        ? format(new Date(item.createdAt), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
+                    <TableCell>{item.itemName}</TableCell>
+                    <TableCell>{item.categoryTitle || 'Unknown'}</TableCell>
                     <TableCell className="text-right">
-                      ${expense.amount.toLocaleString()}
+                      ₱{item.price.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       {isBudgetExceeded && (
@@ -118,7 +117,7 @@ export function ExpenseTable() {
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>
-                                Budget exceeded by $
+                                Budget exceeded by ₱
                                 {Math.abs(remaining).toLocaleString()}
                               </p>
                             </TooltipContent>
@@ -131,7 +130,7 @@ export function ExpenseTable() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => setDeleteExpenseId(expense.id)}>
+                        onClick={() => setDeleteExpenseId(item.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                         <span className="sr-only">Delete Expense</span>
                       </Button>
@@ -144,7 +143,7 @@ export function ExpenseTable() {
                 <TableCell
                   colSpan={6}
                   className="text-center py-6 text-muted-foreground">
-                  {expenses.length === 0
+                  {items.length === 0
                     ? 'No expenses added yet.'
                     : 'No expenses found for the selected category.'}
                 </TableCell>
@@ -169,7 +168,7 @@ export function ExpenseTable() {
             <AlertDialogAction
               onClick={() => {
                 if (deleteExpenseId) {
-                  deleteExpense(deleteExpenseId);
+                  deleteItemExpenses(deleteExpenseId);
                   setDeleteExpenseId(null);
                 }
               }}

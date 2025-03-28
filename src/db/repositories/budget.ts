@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../index';
 import * as schema from '../schema';
 import { createCategory } from './category';
+import { sql } from 'drizzle-orm';
 
 const getTimestamps = () => ({
   created_at: new Date(),
@@ -19,12 +20,21 @@ export const getBudget = async (userId: string) => {
       amount: schema.budgetTable.amount,
       categoryTitle: schema.categoriesTable.title,
       categoryId: schema.budgetTable.category_id,
+      remainingAmount: sql`
+        ${schema.budgetTable.amount} - COALESCE((
+          SELECT SUM(${schema.itemsTable.price})
+          FROM ${schema.itemsTable}
+          WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
+        ), 0)
+      `.as('remaining_amount'),
     })
     .from(schema.budgetTable)
     .innerJoin(
       schema.categoriesTable,
       eq(schema.categoriesTable.id, schema.budgetTable.category_id)
-    );
+    )
+    .where(eq(schema.budgetTable.user_id, userId));
+
   return budget;
 };
 
