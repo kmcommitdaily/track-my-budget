@@ -33,6 +33,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
+
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,8 +51,9 @@ export function AddExpenseDialog({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const { addExpense, categories, getCategoryRemaining, getCategoryById } =
-    useFinance();
+  const { addExpense, getCategoryRemaining, getCategoryById } = useFinance();
+
+  const { data: categories } = useCategoryWithBudget();
 
   // Reset form when dialog opens or closes
   useEffect(() => {
@@ -170,12 +173,17 @@ export function AddExpenseDialog({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.length > 0 ? (
+                  {categories && categories.length > 0 ? (
                     categories.map((category) => {
-                      const remaining = getCategoryRemaining(category.id);
+                      const remaining = getCategoryRemaining(
+                        category.categoryId
+                      );
                       return (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.title} (₱{remaining.toLocaleString()} left)
+                        <SelectItem
+                          key={category.categoryId}
+                          value={category.id}>
+                          {category.categoryTitle} (₱
+                          {remaining.toLocaleString()} left)
                         </SelectItem>
                       );
                     })
@@ -253,7 +261,9 @@ export function AddExpenseDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={categories.length === 0}>
+            <Button
+              type="submit"
+              disabled={categories && categories.length === 0}>
               Add Expense
             </Button>
           </DialogFooter>
