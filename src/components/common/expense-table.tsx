@@ -48,6 +48,10 @@ export function ExpenseTable() {
       ? items
       : items.filter((item) => item.categoryId === categoryFilter);
 
+  const sorted = [...filtered].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   const uniqueCategories = Array.from(
     new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
   );
@@ -86,8 +90,8 @@ export function ExpenseTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length > 0 ? (
-              filtered.map((item) => {
+            {sorted.length > 0 ? (
+              sorted.map((item) => {
                 const remaining = Number(item.remainingBudget);
                 const isBudgetExceeded = remaining < 0;
 

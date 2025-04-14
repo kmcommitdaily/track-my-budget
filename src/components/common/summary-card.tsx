@@ -1,15 +1,17 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFinance } from '@/hooks/finance-context';
+
 import { useSalaries } from '@/hooks/use-salaries';
 import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
+import { useItemExpenses } from '@/hooks/use-item-expenses';
 
 export function SummaryCard() {
-  const { getTotalExpenses } = useFinance();
   const { totalIncome, remainingIncome } = useSalaries();
   const { totalBudget, remainingBudget, isFetching, isLoading } =
     useCategoryWithBudget();
+
+  const { totalExpenses } = useItemExpenses();
   console.log('Summary rerendered', isFetching, isLoading);
   return (
     <Card>
@@ -57,7 +59,7 @@ export function SummaryCard() {
               Total Expenses
             </p>
             <p className="text-2xl font-bold">
-              ₱{getTotalExpenses().toLocaleString()}
+              ₱{totalExpenses.toLocaleString()}
             </p>
           </div>
         </div>

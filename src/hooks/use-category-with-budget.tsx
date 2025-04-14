@@ -73,6 +73,7 @@ export function useCategoryWithBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['category-with-budget'] });
+      queryClient.invalidateQueries({ queryKey: ['item-expenses'] });
     },
   });
 

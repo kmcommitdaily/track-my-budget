@@ -28,6 +28,9 @@ export function useItemExpenses() {
     },
   });
 
+  const totalExpenses =
+    query.data?.reduce((total, item) => total + Number(item.price), 0) || 0;
+
   const createItemExpenses = useMutation({
     mutationFn: async (newItemExpenses: {
       itemName: string;
@@ -76,7 +79,7 @@ export function useItemExpenses() {
 
   return {
     ...query,
-
+    totalExpenses,
     createItemExpenses: createItemExpenses.mutate,
     deleteItemExpenses: deleteItemExpenses.mutate,
     isCreating: createItemExpenses.isPending,

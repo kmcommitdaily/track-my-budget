@@ -36,6 +36,7 @@ export function Sidebar({ open }: SidebarProps) {
   const [deleteItemType, setDeleteItemType] = useState<
     'income' | 'category' | null
   >(null);
+  const [showWarning, setShowWarning] = useState<string | null>(null);
 
   const {
     data: budgets,
@@ -57,6 +58,29 @@ export function Sidebar({ open }: SidebarProps) {
   };
 
   const handleDeleteClick = (id: string, type: 'income' | 'category') => {
+    if (type === 'income' && income) {
+      const remainingIncome = income
+        .filter((i) => i.id !== id)
+        .reduce((sum, i) => sum + i.amount, 0);
+
+      const totalBudget =
+        budgets?.reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+
+      if (remainingIncome < totalBudget) {
+        setShowWarning(
+          '⚠️ Your income will be less than your budget if you delete this. Fix your budget first.'
+        );
+        return;
+      }
+
+      if (income.length === 1 && totalBudget > 0) {
+        setShowWarning(
+          "⚠️ You can't delete your only income source while a budget exists."
+        );
+        return;
+      }
+    }
+
     setDeleteItemId(id);
     setDeleteItemType(type);
   };
@@ -235,6 +259,22 @@ export function Sidebar({ open }: SidebarProps) {
               className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!showWarning}
+        onOpenChange={(open) => !open && setShowWarning(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Heads up</AlertDialogTitle>
+            <AlertDialogDescription>{showWarning}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowWarning(null)}>
+              Okay
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
