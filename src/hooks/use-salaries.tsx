@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-
+import { useCategoryWithBudget } from './use-category-with-budget';
 export type Salary = {
   id: string;
   company: string;
@@ -8,7 +8,7 @@ export type Salary = {
 
 export function useSalaries() {
   const queryClient = useQueryClient();
-
+  const { totalBudget } = useCategoryWithBudget();
   const query = useQuery<Salary[], Error>({
     queryKey: ['salary'],
     queryFn: async () => {
@@ -24,6 +24,7 @@ export function useSalaries() {
     query.data?.reduce((total, salary) => total + Number(salary.amount), 0) ||
     0;
 
+  const remainingIncome = totalIncome - totalBudget;
   const createSalary = useMutation({
     mutationFn: async (newSalary: { companyName: string; amount: number }) => {
       const response = await fetch('/api/finance', {
@@ -67,6 +68,7 @@ export function useSalaries() {
   return {
     ...query,
     totalIncome,
+    remainingIncome,
     createSalary: createSalary.mutate,
     deleteSalary: deleteSalary.mutate,
     isCreating: createSalary.isPending,

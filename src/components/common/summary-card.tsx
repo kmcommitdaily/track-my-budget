@@ -6,10 +6,11 @@ import { useSalaries } from '@/hooks/use-salaries';
 import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
 
 export function SummaryCard() {
-  const { getTotalExpenses, getRemainingIncome } = useFinance();
-  const { totalIncome } = useSalaries();
-  const { totalBudget, remainingBudget } = useCategoryWithBudget();
-
+  const { getTotalExpenses } = useFinance();
+  const { totalIncome, remainingIncome } = useSalaries();
+  const { totalBudget, remainingBudget, isFetching, isLoading } =
+    useCategoryWithBudget();
+  console.log('Summary rerendered', isFetching, isLoading);
   return (
     <Card>
       <CardHeader>
@@ -29,7 +30,7 @@ export function SummaryCard() {
                 Remaining Income
               </p>
               <p className="text-2xl font-bold">
-                ₱{getRemainingIncome().toLocaleString()}
+                ₱{remainingIncome.toLocaleString()}
               </p>
             </div>
           </div>

@@ -39,13 +39,13 @@ export function AddExpenseDialog({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const { data: categories } = useCategoryWithBudget();
+  const { data: categories, remainingBudget } = useCategoryWithBudget();
   const { createItemExpenses } = useItemExpenses();
 
   const selectedCategory = categories?.find((c) => c.categoryId === categoryId);
-  const remainingBudget = selectedCategory
-    ? Number(selectedCategory.remainingAmount)
-    : 0;
+  // const remainingBudget = selectedCategory
+  //   ? Number(selectedCategory.remainingAmount)
+  //   : 0;
 
   useEffect(() => {
     if (!open) {
@@ -76,7 +76,9 @@ export function AddExpenseDialog({
 
     if (expenseAmount > remainingBudget) {
       setWarning(
-        `This expense will exceed your budget for ${selectedCategory?.categoryTitle}. You only have ₱${remainingBudget.toLocaleString()} left.`
+        `This expense will exceed your budget for ${
+          selectedCategory?.categoryTitle
+        }. You only have ₱${remainingBudget.toLocaleString()} left.`
       );
     }
 
@@ -151,9 +153,12 @@ export function AddExpenseDialog({
                 <SelectContent>
                   {categories?.length ? (
                     categories.map((category) => (
-                      <SelectItem key={category.categoryId} value={category.categoryId}>
+                      <SelectItem
+                        key={category.categoryId}
+                        value={category.categoryId}>
                         {category.categoryTitle} (₱
-                        {Number(category.remainingAmount).toLocaleString()} left)
+                        {Number(category.remainingAmount).toLocaleString()}{' '}
+                        left)
                       </SelectItem>
                     ))
                   ) : (

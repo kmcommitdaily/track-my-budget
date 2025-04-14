@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFinance } from '@/hooks/finance-context';
+import { useSalaries } from '@/hooks/use-salaries';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -33,16 +33,15 @@ export function AddCategoryDialog({
   const [budget, setBudget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const { getTotalIncome, getTotalBudget } = useFinance();
+  const { totalIncome, remainingIncome } = useSalaries();
 
-  const { createCategory, isCreating, createError } = useCategoryWithBudget();
+  const { createCategory, isCreating, createError, totalBudget } =
+    useCategoryWithBudget();
 
   const validateAndSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const totalIncome = getTotalIncome();
-    const totalBudget = getTotalBudget();
     const budgetAmount = Number.parseFloat(budget);
     if (totalIncome <= 0) {
       setError('You need to add income before creating a budget category.');
@@ -53,8 +52,10 @@ export function AddCategoryDialog({
       setError('Please enter a valid budget amount greater than zero.');
       return;
     }
+    console.log('Total Income:', totalIncome);
+    console.log('Total Budget:', totalBudget);
 
-    const remainingIncome = totalIncome - totalBudget;
+    console.log('Remaining Income:', remainingIncome);
     if (budgetAmount > remainingIncome) {
       setError(
         `Budget exceeds remaining income. You have $${remainingIncome.toLocaleString()} available.`
@@ -77,6 +78,7 @@ export function AddCategoryDialog({
       }
     );
   };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -124,7 +126,7 @@ export function AddCategoryDialog({
               />
               <p className="text-xs text-muted-foreground">
                 Available income: $
-                {(getTotalIncome() - getTotalBudget()).toLocaleString()}
+                {(totalIncome - totalBudget).toLocaleString()}
               </p>
             </div>
           </div>

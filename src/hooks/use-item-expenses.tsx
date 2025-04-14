@@ -10,7 +10,6 @@ export type ItemExpenses = {
   budgetAmount: string;
   remainingBudget: string;
   categoryTitle: string;
-
 };
 
 export function useItemExpenses() {
@@ -50,6 +49,7 @@ export function useItemExpenses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['item-expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['category-with-budget'] });
     },
   });
 
@@ -70,6 +70,7 @@ export function useItemExpenses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['item-expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['category-with-budget'] });
     },
   });
 
