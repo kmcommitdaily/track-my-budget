@@ -7,7 +7,7 @@ import { Sidebar } from '@/components/common/sidebar';
 import { CalendarCard } from '@/components/common/calendar-card';
 import { SummaryCard } from '@/components/common/summary-card';
 import { ExpenseTable } from '@/components/common/expense-table';
-import { Notepad } from '@/components/common/notepad';
+
 import { AddExpenseDialog } from '@/components/common/add-expense-dialog';
 import { SignoutButton } from './signout-button';
 
@@ -21,7 +21,6 @@ export function DashboardLayout({
   setSidebarOpen,
 }: DashboardLayoutProps) {
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
-  const [notes, setNotes] = useState('');
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -44,7 +43,7 @@ export function DashboardLayout({
           <SignoutButton />
         </header>
 
-        <main className="grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
+        <main className="grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-2">
           <div className="col-span-full lg:col-span-2">
             <div className="grid gap-6 md:grid-cols-2">
               <CalendarCard />
@@ -52,9 +51,9 @@ export function DashboardLayout({
             </div>
           </div>
 
-          <div className="col-span-full lg:col-span-1">
+          {/* <div className="col-span-full lg:col-span-1">
             <Notepad value={notes} onChange={setNotes} />
-          </div>
+          </div> */}
 
           <div className="col-span-full">
             <div className="flex items-center justify-between mb-4">
