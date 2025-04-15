@@ -8,8 +8,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { AddIncomeDialog } from '../common/add-income-dialog';
 import { AddCategoryDialog } from '../common/add-category-dialog';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+// import { Switch } from '@/components/ui/switch';
+// import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ interface SidebarProps {
 export function Sidebar({ open }: SidebarProps) {
   const [incomeDialogOpen, setIncomeDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [showRemaining, setShowRemaining] = useState(true);
+  // const [showRemaining, setShowRemaining] = useState(true);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [deleteItemType, setDeleteItemType] = useState<
     'income' | 'category' | null
@@ -174,6 +174,7 @@ export function Sidebar({ open }: SidebarProps) {
                 </Button>
               </div>
 
+              {/* FOR FUTURE FEATURE
               <div className="flex items-center space-x-2 mb-4">
                 <Switch
                   id="budget-toggle"
@@ -183,7 +184,7 @@ export function Sidebar({ open }: SidebarProps) {
                 <Label htmlFor="budget-toggle" className="text-sm">
                   {showRemaining ? 'Remaining' : 'Spent'}
                 </Label>
-              </div>
+              </div> */}
 
               {budgets && budgets.length > 0 ? (
                 <div className="space-y-2">
@@ -256,7 +257,7 @@ export function Sidebar({ open }: SidebarProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground">
+              className="bg-destructive text-white">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
