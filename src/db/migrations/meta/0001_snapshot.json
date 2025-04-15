@@ -1,6 +1,6 @@
 {
-  "id": "5ac535a0-75c2-4ef4-9114-4f789fd90517",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "fc5ce55f-5451-4a1f-93ba-5976ec801699",
+  "prevId": "e924b1a4-05e9-4dc9-995c-4074523a7d77",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -129,8 +129,7 @@
           "name": "remaining_amount",
           "type": "numeric(10, 2)",
           "primaryKey": false,
-          "notNull": false,
-          "default": "amount"
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -169,6 +168,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -183,7 +188,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "budget_category_id_categories_id_fk": {
@@ -196,7 +201,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -222,6 +227,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
@@ -235,10 +246,30 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "categories_user_id_user_id_fk": {
+          "name": "categories_user_id_user_id_fk",
+          "tableFrom": "categories",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -291,6 +322,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -305,7 +342,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "income_transactions_salary_id_salary_id_fk": {
@@ -318,7 +355,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "income_transactions_company_id_company_id_fk": {
@@ -331,17 +368,18 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "income_transactions_user_id_salary_id_company_id_pk": {
-          "name": "income_transactions_user_id_salary_id_company_id_pk",
+        "income_transactions_user_id_salary_id_company_id_month_pk": {
+          "name": "income_transactions_user_id_salary_id_company_id_month_pk",
           "columns": [
             "user_id",
             "salary_id",
-            "company_id"
+            "company_id",
+            "month"
           ]
         }
       },
@@ -394,7 +432,7 @@
           "name": "budget_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "updated_at": {
           "name": "updated_at",
@@ -409,6 +447,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -423,7 +467,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "items_category_id_categories_id_fk": {
@@ -436,7 +480,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "items_budget_id_budget_id_fk": {
@@ -449,7 +493,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -500,6 +544,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "month": {
+          "name": "month",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -514,7 +564,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "salary_user_id_user_id_fk": {
@@ -527,7 +577,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

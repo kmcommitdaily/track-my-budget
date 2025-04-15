@@ -17,20 +17,23 @@ CREATE TABLE "account" (
 CREATE TABLE "budget" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"amount" numeric(10, 2),
-	"remaining_amount" numeric(10, 2) DEFAULT amount,
+	"remaining_amount" numeric(10, 2),
 	"user_id" text NOT NULL,
 	"category_id" uuid NOT NULL,
 	"start_date" timestamp,
 	"end_date" timestamp,
 	"updated_at" timestamp DEFAULT now(),
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"month" varchar(7) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "categories" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"title" varchar(255),
+	"user_id" text NOT NULL,
 	"updated_at" timestamp DEFAULT now(),
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"month" varchar(7) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "company" (
@@ -42,6 +45,7 @@ CREATE TABLE "income_transactions" (
 	"user_id" text NOT NULL,
 	"salary_id" uuid NOT NULL,
 	"company_id" uuid NOT NULL,
+	"month" varchar(7) NOT NULL,
 	CONSTRAINT "income_transactions_user_id_salary_id_company_id_pk" PRIMARY KEY("user_id","salary_id","company_id")
 );
 --> statement-breakpoint
@@ -52,9 +56,10 @@ CREATE TABLE "items" (
 	"quantity" numeric(10, 2),
 	"user_id" text NOT NULL,
 	"category_id" uuid NOT NULL,
-	"budget_id" uuid,
+	"budget_id" uuid NOT NULL,
 	"updated_at" timestamp DEFAULT now(),
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"month" varchar(7) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "salary" (
@@ -63,7 +68,8 @@ CREATE TABLE "salary" (
 	"company_id" uuid NOT NULL,
 	"user_id" text NOT NULL,
 	"updated_at" timestamp DEFAULT now(),
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"month" varchar(7) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "session" (
@@ -99,14 +105,15 @@ CREATE TABLE "verification" (
 );
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "budget" ADD CONSTRAINT "budget_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "budget" ADD CONSTRAINT "budget_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_salary_id_salary_id_fk" FOREIGN KEY ("salary_id") REFERENCES "public"."salary"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "items" ADD CONSTRAINT "items_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "items" ADD CONSTRAINT "items_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "items" ADD CONSTRAINT "items_budget_id_budget_id_fk" FOREIGN KEY ("budget_id") REFERENCES "public"."budget"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "salary" ADD CONSTRAINT "salary_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "salary" ADD CONSTRAINT "salary_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "budget" ADD CONSTRAINT "budget_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "budget" ADD CONSTRAINT "budget_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "categories" ADD CONSTRAINT "categories_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_salary_id_salary_id_fk" FOREIGN KEY ("salary_id") REFERENCES "public"."salary"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "items" ADD CONSTRAINT "items_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "items" ADD CONSTRAINT "items_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "items" ADD CONSTRAINT "items_budget_id_budget_id_fk" FOREIGN KEY ("budget_id") REFERENCES "public"."budget"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "salary" ADD CONSTRAINT "salary_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "salary" ADD CONSTRAINT "salary_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;

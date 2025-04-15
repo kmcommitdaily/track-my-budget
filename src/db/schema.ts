@@ -14,6 +14,10 @@ const timestamps = {
   created_at: timestamp().defaultNow().notNull(),
 };
 
+const monthColumn = {
+  month: varchar('month', { length: 7 }).notNull(), // format: "YYYY-MM"
+};
+
 /** Better Auth Required User */
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -40,6 +44,7 @@ export const salaryTable = pgTable('salary', {
     .references(() => user.id, { onDelete: 'cascade' }) //
     .notNull(),
   ...timestamps,
+  ...monthColumn,
 });
 
 export const incomeTransactionsTable = pgTable(
@@ -54,10 +59,11 @@ export const incomeTransactionsTable = pgTable(
     company_id: uuid()
       .notNull()
       .references(() => companyTable.id, { onDelete: 'cascade' }),
+    ...monthColumn,
   },
   (table) => [
     primaryKey({
-      columns: [table.user_id, table.salary_id, table.company_id],
+      columns: [table.user_id, table.salary_id, table.company_id, table.month],
     }),
   ]
 );
@@ -69,6 +75,7 @@ export const categoriesTable = pgTable('categories', {
     .references(() => user.id, { onDelete: 'cascade' })
     .notNull(),
   ...timestamps,
+  ...monthColumn,
 });
 
 export const itemsTable = pgTable('items', {
@@ -90,6 +97,7 @@ export const itemsTable = pgTable('items', {
     .notNull(),
 
   ...timestamps,
+  ...monthColumn,
 });
 
 export const budgetTable = pgTable('budget', {
@@ -105,6 +113,7 @@ export const budgetTable = pgTable('budget', {
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),
   ...timestamps,
+  ...monthColumn,
 });
 
 /** For Better Auth Required Table */
