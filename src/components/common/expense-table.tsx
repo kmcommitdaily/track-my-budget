@@ -84,7 +84,7 @@ export function ExpenseTable() {
               <TableHead>Date</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead className="text-right">Price</TableHead>
+              <TableHead>Price</TableHead>
               <TableHead className="w-[80px]">Status</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
@@ -106,9 +106,7 @@ export function ExpenseTable() {
                     </TableCell>
                     <TableCell>{item.itemName}</TableCell>
                     <TableCell>{item.categoryTitle || 'Unknown'}</TableCell>
-                    <TableCell className="text-right">
-                      ₱{item.price.toLocaleString()}
-                    </TableCell>
+                    <TableCell>₱{item.price.toLocaleString()}</TableCell>
                     <TableCell>
                       {isBudgetExceeded && (
                         <TooltipProvider>
