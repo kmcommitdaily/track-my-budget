@@ -8,6 +8,11 @@ const getTimestamps = () => ({
   updated_at: new Date(),
 });
 
+const getCurrentMonth = () => {
+  const date = new Date();
+  return date.toISOString().slice(0, 7); // Format: YYYY-MM
+};
+
 export const getItemExpenses = async (userId: string) => {
   try {
     if (!userId) {
@@ -30,6 +35,7 @@ export const getItemExpenses = async (userId: string) => {
           WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
         ), 0)`.as('remainingBudget'),
         categoryTitle: schema.categoriesTable.title, // 👈 grab it from join
+        month: schema.itemsTable.month,
       })
       .from(schema.itemsTable)
       .innerJoin(
@@ -53,10 +59,11 @@ export const createItemExpenses = async (
   itemName: string,
   categoryId: string,
   price: number,
-  userId: string
+  userId: string,
+  month: string = getCurrentMonth()
 ): Promise<string | null> => {
   try {
-    if (!itemName?.trim() || !categoryId?.trim() || price <= 0) {
+    if (!itemName?.trim() || !categoryId?.trim() || price <= 0 || !month) {
       throw new Error('All fields must be valid');
     }
 
@@ -79,6 +86,7 @@ export const createItemExpenses = async (
         budget_id: existingBudget[0].id,
         user_id: userId,
         ...getTimestamps(),
+        month: month,
       })
       .returning({ id: schema.itemsTable.id });
 
