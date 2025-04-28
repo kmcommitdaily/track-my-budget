@@ -17,7 +17,6 @@ const getTimestamps = () => ({
  * @returns The salary ID if created, otherwise null.
  */
 
-
 export const getSalaries = async (userId: string) => {
   try {
     if (!userId) {
@@ -93,7 +92,9 @@ export const createSalary = async (
         })
         .returning({ id: schema.salaryTable.id });
 
+      console.log('Attempted to insert salary:', salary);
       if (!salary?.id) {
+        console.error('❌ Salary insertion failed:', salary);
         throw new Error('❌ Failed to insert salary.');
       }
 
@@ -112,7 +113,6 @@ export const createSalary = async (
     return null;
   }
 };
-
 
 export const deleteSalary = async (
   salaryId: string,
@@ -163,12 +163,12 @@ export const deleteSalary = async (
           eq(schema.incomeTransactionsTable.company_id, companyId)
         )
       );
-      console.log('✅ Deleted income transaction');
+    console.log('✅ Deleted income transaction');
     // 🔹 Delete salary
     await tx
       .delete(schema.salaryTable)
       .where(eq(schema.salaryTable.id, salaryId));
-      console.log('✅ Deleted salary');
+    console.log('✅ Deleted salary');
     // 🔹 Check if any other salaries exist for this company
     const otherSalaries = await tx
       .select()
@@ -185,4 +185,3 @@ export const deleteSalary = async (
 
   return true;
 };
-
