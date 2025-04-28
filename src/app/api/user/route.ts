@@ -9,6 +9,6 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ user: null });
   }
-  console.log('user:', session.user);
+
   return NextResponse.json({ user: session.user });
 }

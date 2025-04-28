@@ -87,7 +87,7 @@ export function Sidebar({ open }: SidebarProps) {
 
   const handleConfirmDelete = () => {
     if (!deleteItemId || !deleteItemType) return;
-    console.log('🔥 Deleting category with ID:', deleteItemId);
+
 
     if (deleteItemType === 'income') {
       deleteSalary(deleteItemId, {

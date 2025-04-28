@@ -8,11 +8,11 @@ import { useItemExpenses } from '@/hooks/use-item-expenses';
 
 export function SummaryCard() {
   const { totalIncome, remainingIncome } = useSalaries();
-  const { totalBudget, remainingBudget, isFetching, isLoading } =
+  const { totalBudget, remainingBudget} =
     useCategoryWithBudget();
 
   const { totalExpenses } = useItemExpenses();
-  console.log('Summary rerendered', isFetching, isLoading);
+
   return (
     <Card>
       <CardHeader>

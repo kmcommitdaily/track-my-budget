@@ -45,30 +45,30 @@ export default function LoginButton({
       const session = await authClient.getSession();
 
       if (!session) {
-        console.error('Session not found after login');
+
         return;
       }
 
-      console.log('User session:', session);
+
       // Here, you can store the session in state, context, or local storage if needed
 
       setOpen(false);
-    } catch (error) {
-      console.error('Error during Google login:', error);
+    } catch {
+      throw new Error('Error during Google login');
     }
   };
 
   const handleEmailLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     // This would be replaced with actual email login logic
-    console.log('Logging in with email');
+
     setOpen(false);
   };
 
   const handleEmailSignup = async (event: React.FormEvent) => {
     event.preventDefault();
     // This would be replaced with actual email signup logic
-    console.log('Signing up with email');
+
     setOpen(false);
   };
 

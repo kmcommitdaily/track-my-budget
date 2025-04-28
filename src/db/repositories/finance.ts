@@ -75,9 +75,7 @@ export const createSalary = async (
     if (existingCompany.length > 0) {
       companyId = existingCompany[0].id;
     } else {
-      console.log(
-        `🏢 Company "${companyName}" not found, creating a new one...`
-      );
+
       companyId = await createCompany(companyName);
     }
 
@@ -100,7 +98,6 @@ export const createSalary = async (
         })
         .returning({ id: schema.salaryTable.id });
 
-      console.log('Attempted to insert salary:', salary);
       if (!salary?.id) {
         console.error('❌ Salary insertion failed:', salary);
         throw new Error('❌ Failed to insert salary.');
@@ -114,7 +111,7 @@ export const createSalary = async (
         month: month,
       });
 
-      console.log(`✅ Salary created successfully: ${salary.id}`);
+
       return salary.id;
     });
   } catch (error) {
@@ -172,12 +169,12 @@ export const deleteSalary = async (
           eq(schema.incomeTransactionsTable.company_id, companyId)
         )
       );
-    console.log('✅ Deleted income transaction');
+
     // 🔹 Delete salary
     await tx
       .delete(schema.salaryTable)
       .where(eq(schema.salaryTable.id, salaryId));
-    console.log('✅ Deleted salary');
+
     // 🔹 Check if any other salaries exist for this company
     const otherSalaries = await tx
       .select()
@@ -189,7 +186,7 @@ export const deleteSalary = async (
         .delete(schema.companyTable)
         .where(eq(schema.companyTable.id, companyId));
     }
-    console.log('✅ Deleted company');
+
   });
 
   return true;

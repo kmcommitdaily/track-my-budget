@@ -52,10 +52,9 @@ export function AddCategoryDialog({
       setError('Please enter a valid budget amount greater than zero.');
       return;
     }
-    console.log('Total Income:', totalIncome);
-    console.log('Total Budget:', totalBudget);
 
-    console.log('Remaining Income:', remainingIncome);
+
+   
     if (budgetAmount > remainingIncome) {
       setError(
         `Budget exceeds remaining income. You have $${remainingIncome.toLocaleString()} available.`

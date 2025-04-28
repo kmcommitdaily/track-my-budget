@@ -62,9 +62,7 @@ export const createBudget = async (
       .where(eq(schema.categoriesTable.title, categoryTitle));
 
     if (existingCategory.length > 0) {
-      console.log(
-        `Category "${categoryTitle}" alrady exist with ID ${existingCategory[0].id}`
-      );
+    
       categoryId = existingCategory[0].id;
     } else {
       categoryId = await createCategory(categoryTitle, userId);

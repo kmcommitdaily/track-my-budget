@@ -11,10 +11,9 @@ export const db = drizzle(sql, { schema });
 async function testConnection() {
   try {
     // Use the raw sql client to run a test query
-    const result = await sql`SELECT 1+1 AS result`;
-    console.log('DB Connection Test:', result);
+    await sql`SELECT 1+1 AS result`;
   } catch (error) {
-    console.error('DB Connection Error:', error);
+    throw new Error('Database connection failed: ' + error);
   }
 }
 

@@ -23,7 +23,7 @@ export const createCompany = async (companyName: string): Promise<string | null>
       .limit(1);
 
     if (existingCompany.length > 0) {
-      console.log(`✅ Company "${companyName}" already exists with ID: ${existingCompany[0].id}`);
+
       return existingCompany[0].id;
     }
 
@@ -37,7 +37,7 @@ export const createCompany = async (companyName: string): Promise<string | null>
       throw new Error('Failed to create company.');
     }
 
-    console.log(`🏢 New company created: ${companyName} (ID: ${newCompany.id})`);
+
     return newCompany.id;
   } catch (error) {
     console.error('🔥 Error creating company:', error);
