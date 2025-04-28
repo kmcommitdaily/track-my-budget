@@ -1,0 +1,2 @@
+ALTER TABLE "income_transactions" DROP CONSTRAINT "income_transactions_user_id_salary_id_company_id_pk";--> statement-breakpoint
+ALTER TABLE "income_transactions" ADD CONSTRAINT "income_transactions_user_id_salary_id_company_id_month_pk" PRIMARY KEY("user_id","salary_id","company_id","month");

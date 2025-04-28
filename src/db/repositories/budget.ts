@@ -8,7 +8,10 @@ const getTimestamps = () => ({
   created_at: new Date(),
   updated_at: new Date(),
 });
-
+const getCurrentMonth = () => {
+  const date = new Date();
+  return date.toISOString().slice(0, 7); // Format: YYYY-MM
+};
 export const getBudget = async (userId: string) => {
   if (!userId) {
     throw new Error('user id is required for budget');
@@ -27,6 +30,7 @@ export const getBudget = async (userId: string) => {
           WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
         ), 0)
       `.as('remaining_amount'),
+      month: schema.budgetTable.month,
     })
     .from(schema.budgetTable)
     .innerJoin(
@@ -41,11 +45,12 @@ export const getBudget = async (userId: string) => {
 export const createBudget = async (
   amount: number,
   categoryTitle: string,
-  userId: string
+  userId: string,
+  month: string = getCurrentMonth()
 ): Promise<string | null> => {
   try {
-    if (!userId || !categoryTitle?.trim() || amount <= 0) {
-      console.error('Invalid input:', { userId, amount, categoryTitle });
+    if (!userId || !categoryTitle?.trim() || amount <= 0 || !month) {
+      console.error('Invalid input:', { userId, amount, categoryTitle, month });
       throw new Error('All fields must be valid');
     }
 
@@ -76,6 +81,7 @@ export const createBudget = async (
         category_id: categoryId,
         user_id: userId,
         ...getTimestamps(),
+        month: month
       })
       .returning({ id: schema.budgetTable.id });
 

@@ -2,6 +2,11 @@ import { eq } from 'drizzle-orm';
 import { db } from '../index';
 import * as schema from '../schema';
 
+
+const getCurrentMonth = () => {
+  const date = new Date();
+  return date.toISOString().slice(0, 7); // Format: YYYY-MM
+};
 export const getCategory = async (userId: string) => {
   try {
     if (!userId) {
@@ -12,6 +17,7 @@ export const getCategory = async (userId: string) => {
       .select({
         id: schema.categoriesTable.id,
         categoryTitle: schema.categoriesTable.title,
+        month: schema.categoriesTable.month,
       })
       .from(schema.categoriesTable);
 
@@ -24,11 +30,12 @@ export const getCategory = async (userId: string) => {
 
 export const createCategory = async (
   categoryTitle: string,
-  userId: string
+  userId: string,
+  month: string = getCurrentMonth()
 ): Promise<string | null> => {
   try {
-    if (!categoryTitle?.trim()) {
-      throw new Error('Category title cannot be empty');
+    if (!categoryTitle?.trim() || !userId || !month) {
+      throw new Error('user id , month and category title are required nad must be valid');
     }
 
     const existingCategory = await db
@@ -49,6 +56,7 @@ export const createCategory = async (
         id: crypto.randomUUID(),
         title: categoryTitle,
         user_id: userId,
+        month: month
       })
       .returning({ id: schema.categoriesTable.id });
 

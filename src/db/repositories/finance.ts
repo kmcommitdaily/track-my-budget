@@ -9,6 +9,11 @@ const getTimestamps = () => ({
   updated_at: new Date(),
 });
 
+const getCurrentMonth = () => {
+  const date = new Date();
+  return date.toISOString().slice(0, 7); // Format: YYYY-MM
+};
+
 /**
  * Creates a salary record and ensures it is linked to a company & user.
  * @param userId - The ID of the user.
@@ -29,6 +34,7 @@ export const getSalaries = async (userId: string) => {
         id: schema.salaryTable.id,
         amount: schema.salaryTable.amount,
         company: schema.companyTable.name,
+        month: schema.salaryTable.month,
       })
       .from(schema.salaryTable)
       .innerJoin(
@@ -46,12 +52,13 @@ export const getSalaries = async (userId: string) => {
 export const createSalary = async (
   userId: string,
   companyName: string,
-  amount: number
+  amount: number,
+  month: string = getCurrentMonth()
 ): Promise<string | null> => {
   try {
     // 🔹 Validate inputs
-    if (!userId || !companyName?.trim() || amount <= 0) {
-      console.error('❌ Invalid input:', { userId, companyName, amount });
+    if (!userId || !companyName?.trim() || amount <= 0 || !month) {
+      console.error('❌ Invalid input:', { userId, companyName, amount, month });
       throw new Error(
         'All fields (userId, companyName, amount) are required and must be valid.'
       );
@@ -87,6 +94,7 @@ export const createSalary = async (
           id: crypto.randomUUID(),
           amount: amount.toString(), // Convert to string for numeric type in Drizzle
           company_id: companyId,
+          month: month,
           user_id: userId,
           ...getTimestamps(),
         })
@@ -103,6 +111,7 @@ export const createSalary = async (
         user_id: userId,
         salary_id: salary.id,
         company_id: companyId,
+        month: month,
       });
 
       console.log(`✅ Salary created successfully: ${salary.id}`);
