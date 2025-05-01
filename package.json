@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "pnpm run build",
+    "build": "next build",
     "start": "pnpm run dev",
     "lint": "next lint",
     "db:generate": "pnpm drizzle-kit generate",
