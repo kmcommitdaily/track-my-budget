@@ -15,20 +15,20 @@ export function CalendarCard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(true); // Loading state for user ID fetch
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
-    // Fetch user ID on component mount
+
     getUserId().then((id) => {
       setUserId(id);
-      setIsLoading(false); // Stop loading once user ID is set
+      setIsLoading(false);
     });
   }, []);
 
   useEffect(() => {
-    if (!userId) return; // Don't attempt to load notes without a user ID
+    if (!userId) return;
 
-    // Load notes from localStorage when userId is available
+
     const stored = localStorage.getItem(`notepad-${userId}`);
     if (stored) {
       try {
@@ -37,9 +37,9 @@ export function CalendarCard() {
         setNotes({});
       }
     }
-  }, [userId]); // Only run when userId changes
+  }, [userId]);
 
-  // Handle note change
+
   const currentKey = selectedDate.toDateString();
   const currentNote = notes[currentKey] || '';
 
@@ -55,7 +55,7 @@ export function CalendarCard() {
 
   // Avoid displaying notes until userId is set
   if (isLoading) {
-    return <div>Loading...</div>; // You can replace this with a loading spinner
+    return <div>Loading...</div>;
   }
 
   return (
