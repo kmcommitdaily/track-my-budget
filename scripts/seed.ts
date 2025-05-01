@@ -40,6 +40,7 @@ async function seed() {
     user_id: userId,
     created_at: new Date(),
     updated_at: new Date(),
+    month: new Date().toISOString().slice(0, 7), // Format: YYYY-MM
   };
 
   await db.insert(categoriesTable).values(categoryData).onConflictDoNothing();
@@ -55,6 +56,7 @@ async function seed() {
     end_date: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
+    month: new Date().toISOString().slice(0, 7), // Format: YYYY-MM
   };
 
   await db.insert(budgetTable).values(budgetData).onConflictDoNothing();
@@ -70,11 +72,12 @@ async function seed() {
     budget_id: budgetId,
     created_at: new Date(),
     updated_at: new Date(),
+    month: new Date().toISOString().slice(0, 7), // Format: YYYY-MM
   };
 
   await db.insert(itemsTable).values(itemData).onConflictDoNothing();
 
-  console.log('✅ Seed complete. You can now test cascade deletes.');
+
 }
 
 seed().catch((err) => {
