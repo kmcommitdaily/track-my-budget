@@ -13,6 +13,7 @@ export const auth = betterAuth({
     },
   },
   emailAndPassword: {
-    enabled: true
-  }
+    enabled: true,
+  },
+  allowedOrigins: process.env.BETTER_AUTH_ALLOWED_ORIGINS?.split(',') || [],
 });
