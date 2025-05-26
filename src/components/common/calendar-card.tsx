@@ -15,10 +15,13 @@ export function CalendarCard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [formattedDate, setFormattedDate] = useState<string>(
+    formatDate(selectedDate)
+  );
 
   useEffect(() => {
-
     getUserId().then((id) => {
       setUserId(id);
       setIsLoading(false);
@@ -27,7 +30,6 @@ export function CalendarCard() {
 
   useEffect(() => {
     if (!userId) return;
-
 
     const stored = localStorage.getItem(`notepad-${userId}`);
     if (stored) {
@@ -39,6 +41,9 @@ export function CalendarCard() {
     }
   }, [userId]);
 
+  useEffect(() => {
+    setFormattedDate(formatDate(selectedDate)); // Update formatted date when selectedDate changes
+  }, [selectedDate]);
 
   const currentKey = selectedDate.toDateString();
   const currentNote = notes[currentKey] || '';
@@ -52,7 +57,13 @@ export function CalendarCard() {
       return updated;
     });
   };
-
+  function formatDate(date: Date): string {
+    return date.toLocaleString('default', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
   // Avoid displaying notes until userId is set
   if (isLoading) {
     return <div>Loading...</div>;
@@ -61,7 +72,7 @@ export function CalendarCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calendar</CardTitle>
+        <CardTitle>Calendar - {formattedDate}</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-around gap-3">
         <Calendar
