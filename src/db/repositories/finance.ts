@@ -23,14 +23,20 @@ const getCurrentMonth = () => {
  */
 
 
-export const getSalaries = async (userId: string) => {
+export const getSalaries = async (userId: string, month?: string) => {
   try {
     if (!userId) {
       throw new Error('❌ User ID is required.');
     }
 
     // 🔹 Fetch salaries with company name
-    const salaries = await db
+    const conditions = [eq(schema.salaryTable.user_id, userId)];
+
+    if (month) {
+      conditions.push(eq(schema.salaryTable.month, month));
+    }
+
+    const query = db
       .select({
         id: schema.salaryTable.id,
         amount: schema.salaryTable.amount,
@@ -42,9 +48,10 @@ export const getSalaries = async (userId: string) => {
         schema.companyTable,
         eq(schema.salaryTable.company_id, schema.companyTable.id)
       )
-      .where(eq(schema.salaryTable.user_id, userId));
+      .where(and(...conditions));
 
-    return salaries;
+    const result = await query;
+    return result;
   } catch (error) {
     console.error('🔥 Failed to fetch salaries:', error);
     return [];

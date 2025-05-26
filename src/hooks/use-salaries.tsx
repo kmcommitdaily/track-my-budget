@@ -4,15 +4,16 @@ export type Salary = {
   id: string;
   company: string;
   amount: number;
+  month: string
 };
 
-export function useSalaries() {
+export function useSalaries(month?: string) {
   const queryClient = useQueryClient();
   const { totalBudget } = useCategoryWithBudget();
   const query = useQuery<Salary[], Error>({
-    queryKey: ['salary'],
+    queryKey: ['salary', month],
     queryFn: async () => {
-      const response = await fetch('/api/finance');
+      const response = await fetch(`/api/finance?month=${month}`);
 
       if (!response.ok) throw new Error('failed to fetch salary');
       const data = await response.json();
@@ -26,7 +27,7 @@ export function useSalaries() {
 
   const remainingIncome = totalIncome - totalBudget;
   const createSalary = useMutation({
-    mutationFn: async (newSalary: { companyName: string; amount: number }) => {
+    mutationFn: async (newSalary: { companyName: string; amount: number; month: string }) => {
       const response = await fetch('/api/finance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +42,7 @@ export function useSalaries() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salary'] });
+      queryClient.invalidateQueries({ queryKey: ['salary', month] });
     },
   });
 
@@ -61,7 +62,7 @@ export function useSalaries() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salary'] });
+      queryClient.invalidateQueries({ queryKey: ['salary', month] });
     },
   });
 

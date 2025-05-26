@@ -4,7 +4,7 @@ import { createSalary, getSalaries, deleteSalary } from '@/db/repositories/finan
 import { headers } from 'next/headers';
 
 // 🔹 Handle GET request to fetch salaries
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -13,8 +13,11 @@ export async function GET() {
 
     console.log('📌 Fetching salaries for user:', session.user.id);
 
+const url = new URL(req.url);
+const month = url.searchParams.get('month') || undefined
+
     // 🔹 Retrieve salaries from the database
-    const salaries = await getSalaries(session.user.id);
+    const salaries = await getSalaries(session.user.id, month);
     return NextResponse.json({ success: true, salaries });
   } catch (error) {
     console.error('🔥 Error fetching salaries:', error);
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Parse request body
-    const { companyName, amount } = await req.json();
+    const { companyName, amount, month } = await req.json();
     console.log('📌 Creating salary for user:', session.user.id);
 
     // 🔹 Validate input
@@ -48,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Call the createSalary function
-    const salaryId = await createSalary(session.user.id, companyName, amount);
+    const salaryId = await createSalary(session.user.id, companyName, amount, month);
 
     if (!salaryId) {
       throw new Error('Failed to create salary.');
