@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useCategoryWithBudget } from './use-category-with-budget';
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useCategoryWithBudget } from "./category/queries/use-category-with-budget";
 export type Salary = {
   id: string;
   company: string;
@@ -10,11 +10,11 @@ export function useSalaries() {
   const queryClient = useQueryClient();
   const { totalBudget } = useCategoryWithBudget();
   const query = useQuery<Salary[], Error>({
-    queryKey: ['salary'],
+    queryKey: ["salary"],
     queryFn: async () => {
-      const response = await fetch('/api/finance');
+      const response = await fetch("/api/finance");
 
-      if (!response.ok) throw new Error('failed to fetch salary');
+      if (!response.ok) throw new Error("failed to fetch salary");
       const data = await response.json();
       return data.salaries as Salary[];
     },
@@ -27,41 +27,41 @@ export function useSalaries() {
   const remainingIncome = totalIncome - totalBudget;
   const createSalary = useMutation({
     mutationFn: async (newSalary: { companyName: string; amount: number }) => {
-      const response = await fetch('/api/finance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/finance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSalary),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'failed to add salary');
+        throw new Error(errorData.error || "failed to add salary");
       }
 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salary'] });
+      queryClient.invalidateQueries({ queryKey: ["salary"] });
     },
   });
 
   const deleteSalary = useMutation({
     mutationFn: async (salaryId: string) => {
-      const response = await fetch('/api/finance', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/finance", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ salaryId }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete salary');
+        throw new Error(data.error || "Failed to delete salary");
       }
 
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salary'] });
+      queryClient.invalidateQueries({ queryKey: ["salary"] });
     },
   });
 
