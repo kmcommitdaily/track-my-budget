@@ -5,11 +5,10 @@ dotenv.config();
 
 const isProd = process.env.USE_PRODUCTION_DB === 'true';
 
-const dbURL = isProd
-  ? process.env.PRODUCTION_DATABASE_URL
-  : process.env.DEVELOPMENT_DATABASE_URL;
+const dbURL = isProd ? process.env.PRODUCTION_DATABASE_URL : process.env.DEVELOPMENT_DATABASE_URL
 
-console.log(`[Drizzle] Using ${isProd ? 'Production' : 'Development'} DB`);
+
+console.log(`[Drizzle] Using ${isProd ? "Production" : "Development"} DB`);
 export default defineConfig({
   out: './src/db/migrations',
   dialect: 'postgresql',

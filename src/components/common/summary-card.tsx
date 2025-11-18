@@ -1,18 +1,17 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { useSalaries } from '@/hooks/use-salaries';
-import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
-import { useItemExpenses } from '@/hooks/use-item-expenses';
+import { useSalaries } from "@/hooks/salary/queries/use-salaries";
+import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
+import { useItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 
 export function SummaryCard() {
   const { totalIncome, remainingIncome } = useSalaries();
-  const { totalBudget, remainingBudget, isFetching, isLoading } =
-    useCategoryWithBudget();
+  const { totalBudget, remainingBudget } = useCategoryWithBudget();
 
   const { totalExpenses } = useItemExpenses();
-  console.log('Summary rerendered', isFetching, isLoading);
+
   return (
     <Card>
       <CardHeader>

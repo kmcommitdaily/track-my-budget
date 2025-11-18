@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Track My Budget V0',
+  title: 'everyCents',
   description: 'Making budgeting easy',
 };
 

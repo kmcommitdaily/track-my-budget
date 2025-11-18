@@ -71,7 +71,7 @@ export const createItemExpenses = async (
       .select()
       .from(schema.budgetTable)
       .where(eq(schema.budgetTable.category_id, categoryId));
-    console.log('[🔍 Budget Lookup]', categoryId, existingBudget);
+
 
     if (!existingBudget.length) {
       throw new Error('no budget found in this category');

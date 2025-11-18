@@ -44,9 +44,7 @@ export const createCategory = async (
       .where(eq(schema.categoriesTable.title, categoryTitle));
 
     if (existingCategory.length > 0) {
-      console.log(
-        `Category "${categoryTitle}" alrady exist with ID ${existingCategory[0].id}`
-      );
+
       return existingCategory[0].id;
     }
 
@@ -79,12 +77,7 @@ export const deleteCategory = async (
     throw new Error('Missing categoryId or userId');
   }
 
-  console.log(
-    '💥 Attempting to delete category:',
-    categoryId,
-    'for user:',
-    userId
-  );
+
 
   const [existingCategory] = await db
     .select()
