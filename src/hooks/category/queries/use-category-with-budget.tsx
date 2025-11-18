@@ -1,10 +1,14 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { getCategoryWithBudgetAction } from "@/action/category/get-category-with-budget-action";
 
+/**
+ * Hook for fetching category with budget data.
+ * Provides computed values for total and remaining budget.
+ *
+ * @returns Query result with additional computed values (totalBudget, remainingBudget)
+ */
 export function useCategoryWithBudget() {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ["category-with-budget"],
     queryFn: getCategoryWithBudgetAction,
@@ -20,59 +24,9 @@ export function useCategoryWithBudget() {
       0
     ) || 0;
 
-  const createCategory = useMutation({
-    mutationFn: async (newCategory: {
-      categoryTitle: string;
-      amount: number;
-    }) => {
-      const response = await fetch("api/category-budget", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newCategory),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "failed to add categorty");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
-    },
-  });
-
-  const deleteCategory = useMutation({
-    mutationFn: async (categoryId: string) => {
-      const response = await fetch("/api/category-budget", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryId }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to delete category");
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
-      queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
-    },
-  });
-
   return {
     ...query,
     totalBudget,
     remainingBudget,
-    createCategory: createCategory.mutate,
-    deleteCategory: deleteCategory.mutate,
-    isCreating: createCategory.isPending,
-    createError: createCategory.error,
-    isDeleting: deleteCategory.isPending,
-    deleteError: deleteCategory.error,
   };
 }

@@ -14,11 +14,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSalaries } from "@/hooks/use-salaries";
+import { useSalaries } from "@/hooks/salary/queries/use-salaries";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
+import { useCreateCategory } from "@/hooks/category/mutations/use-create-category";
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -35,8 +36,8 @@ export function AddCategoryDialog({
 
   const { totalIncome, remainingIncome } = useSalaries();
 
-  const { createCategory, isCreating, createError, totalBudget } =
-    useCategoryWithBudget();
+  const { totalBudget } = useCategoryWithBudget();
+  const { createCategory, isCreating, createError } = useCreateCategory();
 
   const validateAndSubmit = (e: React.FormEvent) => {
     e.preventDefault();

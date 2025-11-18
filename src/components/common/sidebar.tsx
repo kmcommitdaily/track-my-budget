@@ -22,7 +22,9 @@ import {
 } from "../ui/alert-dialog";
 
 import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
-import { useSalaries } from "@/hooks/use-salaries";
+import { useDeleteCategory } from "@/hooks/category/mutations/use-delete-category";
+import { useSalaries } from "@/hooks/salary/queries/use-salaries";
+import { useDeleteSalary } from "@/hooks/salary/mutations/use-delete-salary";
 
 interface SidebarProps {
   open: boolean;
@@ -42,15 +44,17 @@ export function Sidebar({ open }: SidebarProps) {
     data: budgets,
     isLoading: isBudgetLoading,
     error: budgetError,
-    deleteCategory,
   } = useCategoryWithBudget();
+
+  const { deleteCategory } = useDeleteCategory();
 
   const {
     data: income,
     isLoading: isIncomeLoading,
     error: incomeError,
-    deleteSalary,
   } = useSalaries();
+
+  const { deleteSalary } = useDeleteSalary();
 
   const resetDeleteState = () => {
     setDeleteItemId(null);

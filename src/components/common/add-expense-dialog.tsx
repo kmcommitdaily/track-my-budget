@@ -22,7 +22,7 @@ import {
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
-import { useItemExpenses } from "@/hooks/use-item-expenses";
+import { useCreateItemExpense } from "@/hooks/expenses/mutations/use-create-item-expense";
 
 interface AddExpenseDialogProps {
   open: boolean;
@@ -40,7 +40,7 @@ export function AddExpenseDialog({
   const [warning, setWarning] = useState<string | null>(null);
 
   const { data: categories, remainingBudget } = useCategoryWithBudget();
-  const { createItemExpenses } = useItemExpenses();
+  const { createItemExpense } = useCreateItemExpense();
 
   const selectedCategory = categories?.find((c) => c.categoryId === categoryId);
   // const remainingBudget = selectedCategory
@@ -82,18 +82,26 @@ export function AddExpenseDialog({
       );
     }
 
-    createItemExpenses({
-      itemName: title,
-      categoryId,
-      price: expenseAmount,
-    });
-
-    setTitle("");
-    setAmount("");
-    setCategoryId("");
-    setError(null);
-    setWarning(null);
-    onOpenChange(false);
+    createItemExpense(
+      {
+        itemName: title,
+        categoryId,
+        price: expenseAmount,
+      },
+      {
+        onSuccess: () => {
+          setTitle("");
+          setAmount("");
+          setCategoryId("");
+          setError(null);
+          setWarning(null);
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          setError(err.message || "Something went wrong. Try again");
+        },
+      }
+    );
   };
 
   return (
