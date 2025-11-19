@@ -4,7 +4,7 @@
  */
 
 import type { Category } from "@/core/entities/category";
-import * as schema from "@/db/schema";
+// import * as schema from "@/db/schema";
 
 type CategoryRow = {
   id: string;
