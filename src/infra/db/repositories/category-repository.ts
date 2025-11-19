@@ -68,16 +68,20 @@ export function createCategoryRepository(): CategoryRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db
+      // Use returning() to check if any rows were actually deleted
+      // This allows us to distinguish between "not found" and "unauthorized"
+      const result = await db
         .delete(schema.categoriesTable)
         .where(
           and(
             eq(schema.categoriesTable.id, id),
             eq(schema.categoriesTable.user_id, userId)
           )
-        );
+        )
+        .returning({ id: schema.categoriesTable.id });
 
-      return true;
+      // Return true only if a row was actually deleted
+      return result.length > 0;
     },
   };
 }

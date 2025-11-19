@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /**
  * Hook for deleting a salary/income entry.
- * Automatically invalidates the salary query on success.
+ * Uses optimistic updates for instant UI feedback.
  *
  * @returns Mutation object with mutate function and loading/error states
  */
@@ -24,7 +24,28 @@ export function useDeleteSalary() {
 
       return data;
     },
+    onMutate: async (salaryId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["salary"] });
+
+      // Snapshot previous value
+      const previousSalaries = queryClient.getQueryData(["salary"]);
+
+      // Optimistically remove from cache
+      queryClient.setQueryData(["salary"], (old: any[] = []) => {
+        return old.filter((salary) => salary.id !== salaryId);
+      });
+
+      return { previousSalaries };
+    },
+    onError: (err, salaryId, context) => {
+      // Rollback on error
+      if (context?.previousSalaries) {
+        queryClient.setQueryData(["salary"], context.previousSalaries);
+      }
+    },
     onSuccess: () => {
+      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["salary"] });
     },
   });

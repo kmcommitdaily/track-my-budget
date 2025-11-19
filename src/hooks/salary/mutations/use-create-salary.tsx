@@ -7,7 +7,7 @@ export interface CreateSalaryInput {
 
 /**
  * Hook for creating a new salary/income entry.
- * Automatically invalidates the salary query on success.
+ * Uses optimistic updates for instant UI feedback, then refetches to ensure consistency.
  *
  * @returns Mutation object with mutate function and loading/error states
  */
@@ -29,7 +29,41 @@ export function useCreateSalary() {
 
       return response.json();
     },
+    onMutate: async (newSalary) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ["salary"] });
+
+      // Snapshot previous value for rollback
+      const previousSalaries = queryClient.getQueryData(["salary"]);
+
+      // Optimistically update cache with temporary data
+      queryClient.setQueryData(["salary"], (old: any[] = []) => {
+        const tempId = `temp-${Date.now()}`;
+        return [
+          ...old,
+          {
+            id: tempId,
+            company: newSalary.companyName,
+            amount: newSalary.amount,
+            companyId: tempId,
+            userId: "",
+            month: new Date().toISOString().slice(0, 7),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+      });
+
+      return { previousSalaries };
+    },
+    onError: (err, newSalary, context) => {
+      // Rollback on error
+      if (context?.previousSalaries) {
+        queryClient.setQueryData(["salary"], context.previousSalaries);
+      }
+    },
     onSuccess: () => {
+      // Refetch to get server data (with proper IDs, etc.)
       queryClient.invalidateQueries({ queryKey: ["salary"] });
     },
   });

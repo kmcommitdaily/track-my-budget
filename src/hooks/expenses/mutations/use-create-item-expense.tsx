@@ -8,7 +8,7 @@ export interface CreateItemExpenseInput {
 
 /**
  * Hook for creating a new item expense.
- * Automatically invalidates the item-expenses and category-with-budget queries on success.
+ * Uses optimistic updates for instant UI feedback.
  *
  * @returns Mutation object with mutate function and loading/error states
  */
@@ -30,7 +30,79 @@ export function useCreateItemExpense() {
 
       return response.json();
     },
+    onMutate: async (newItemExpense) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["item-expenses"] });
+      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+
+      // Snapshot previous values
+      const previousExpenses = queryClient.getQueryData(["item-expenses"]);
+      const previousBudgets = queryClient.getQueryData([
+        "category-with-budget",
+      ]);
+
+      // Get category title from budgets cache
+      const budgets = (previousBudgets as any[]) || [];
+      const category = budgets.find(
+        (b) => b.categoryId === newItemExpense.categoryId
+      );
+
+      // Optimistically add to expenses cache
+      queryClient.setQueryData(["item-expenses"], (old: any[] = []) => {
+        const tempId = `temp-${Date.now()}`;
+        return [
+          ...old,
+          {
+            id: tempId,
+            itemName: newItemExpense.itemName,
+            name: newItemExpense.itemName,
+            price: newItemExpense.price,
+            categoryId: newItemExpense.categoryId,
+            budgetId: tempId,
+            categoryTitle: category?.categoryTitle || "",
+            budgetAmount: "0",
+            remainingBudget: "0",
+            createdAt: new Date().toISOString(),
+            quantity: 1,
+          },
+        ];
+      });
+
+      // Optimistically update budget remaining amount
+      queryClient.setQueryData(["category-with-budget"], (old: any[] = []) => {
+        return old.map((budget) => {
+          if (budget.categoryId === newItemExpense.categoryId) {
+            const currentRemaining = Number(
+              budget.remainingAmount || budget.amount
+            );
+            return {
+              ...budget,
+              remainingAmount: Math.max(
+                0,
+                currentRemaining - newItemExpense.price
+              ).toString(),
+            };
+          }
+          return budget;
+        });
+      });
+
+      return { previousExpenses, previousBudgets };
+    },
+    onError: (err, newItemExpense, context) => {
+      // Rollback on error
+      if (context?.previousExpenses) {
+        queryClient.setQueryData(["item-expenses"], context.previousExpenses);
+      }
+      if (context?.previousBudgets) {
+        queryClient.setQueryData(
+          ["category-with-budget"],
+          context.previousBudgets
+        );
+      }
+    },
     onSuccess: () => {
+      // Refetch to get server data
       queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
     },

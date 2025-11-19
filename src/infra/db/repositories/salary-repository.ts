@@ -83,15 +83,20 @@ export function createSalaryRepository(): SalaryRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db
+      // Use returning() to check if any rows were actually deleted
+      // This allows us to distinguish between "not found" and "unauthorized"
+      const result = await db
         .delete(schema.salaryTable)
         .where(
           and(
             eq(schema.salaryTable.id, id),
             eq(schema.salaryTable.user_id, userId)
           )
-        );
-      return true;
+        )
+        .returning({ id: schema.salaryTable.id });
+
+      // Return true only if a row was actually deleted
+      return result.length > 0;
     },
   };
 }

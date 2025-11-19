@@ -108,15 +108,20 @@ export function createExpenseRepository(): ExpenseRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db
+      // Use returning() to check if any rows were actually deleted
+      // This allows us to distinguish between "not found" and "unauthorized"
+      const result = await db
         .delete(schema.itemsTable)
         .where(
           and(
             eq(schema.itemsTable.id, id),
             eq(schema.itemsTable.user_id, userId)
           )
-        );
-      return true;
+        )
+        .returning({ id: schema.itemsTable.id });
+
+      // Return true only if a row was actually deleted
+      return result.length > 0;
     },
   };
 }

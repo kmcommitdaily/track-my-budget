@@ -7,7 +7,7 @@ export interface CreateCategoryInput {
 
 /**
  * Hook for creating a new category with budget.
- * Automatically invalidates the category-with-budget query on success.
+ * Uses optimistic updates for instant UI feedback.
  *
  * @returns Mutation object with mutate function and loading/error states
  */
@@ -29,7 +29,47 @@ export function useCreateCategory() {
 
       return response.json();
     },
+    onMutate: async (newCategory) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+
+      // Snapshot previous value
+      const previousBudgets = queryClient.getQueryData([
+        "category-with-budget",
+      ]);
+
+      // Optimistically add to cache
+      queryClient.setQueryData(["category-with-budget"], (old: any[] = []) => {
+        const tempId = `temp-${Date.now()}`;
+        return [
+          ...old,
+          {
+            id: tempId,
+            categoryId: tempId,
+            categoryTitle: newCategory.categoryTitle,
+            amount: newCategory.amount.toString(),
+            remainingAmount: newCategory.amount.toString(),
+            userId: "",
+            month: new Date().toISOString().slice(0, 7),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+      });
+
+      return { previousBudgets };
+    },
+    onError: (err, newCategory, context) => {
+      // Rollback on error
+      if (context?.previousBudgets) {
+        queryClient.setQueryData(
+          ["category-with-budget"],
+          context.previousBudgets
+        );
+      }
+    },
     onSuccess: () => {
+      // Refetch to get server data
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
     },
   });
