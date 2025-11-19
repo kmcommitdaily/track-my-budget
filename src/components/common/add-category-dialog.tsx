@@ -61,17 +61,22 @@ export function AddCategoryDialog({
       return;
     }
 
-    createCategory(
-      { categoryTitle: title, amount: budgetAmount },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setBudget("");
-          onOpenChange(false);
-        },
+    // Close dialog immediately - optimistic updates handle UI
+    const titleToSubmit = title;
+    const budgetToSubmit = budgetAmount;
+    setTitle("");
+    setBudget("");
+    onOpenChange(false);
 
+    createCategory(
+      { categoryTitle: titleToSubmit, amount: budgetToSubmit },
+      {
         onError: (err) => {
-          setError(err.message || "Something went wrong. Try again");
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
         },
       }
     );
@@ -88,7 +93,6 @@ export function AddCategoryDialog({
         </DialogHeader>
 
         <form onSubmit={validateAndSubmit}>
-          {isCreating && <p>Adding category...</p>}
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />

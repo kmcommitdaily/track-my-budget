@@ -82,23 +82,30 @@ export function AddExpenseDialog({
       );
     }
 
+    // Close dialog immediately - optimistic updates handle UI
+    const titleToSubmit = title;
+    const categoryIdToSubmit = categoryId;
+    const expenseAmountToSubmit = expenseAmount;
+    setTitle("");
+    setAmount("");
+    setCategoryId("");
+    setError(null);
+    setWarning(null);
+    onOpenChange(false);
+
     createItemExpense(
       {
-        itemName: title,
-        categoryId,
-        price: expenseAmount,
+        itemName: titleToSubmit,
+        categoryId: categoryIdToSubmit,
+        price: expenseAmountToSubmit,
       },
       {
-        onSuccess: () => {
-          setTitle("");
-          setAmount("");
-          setCategoryId("");
-          setError(null);
-          setWarning(null);
-          onOpenChange(false);
-        },
         onError: (err) => {
-          setError(err.message || "Something went wrong. Try again");
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
         },
       }
     );

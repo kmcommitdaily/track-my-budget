@@ -33,19 +33,25 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
       return;
     }
 
+    // Close dialog immediately - optimistic updates handle UI
+    const companyToSubmit = company;
+    const amountToSubmit = parseFloat(amount);
+    setCompany("");
+    setAmount("");
+    onOpenChange(false);
+
     createSalary(
       {
-        companyName: company,
-        amount: parseFloat(amount),
+        companyName: companyToSubmit,
+        amount: amountToSubmit,
       },
       {
-        onSuccess: () => {
-          setCompany("");
-          setAmount("");
-          onOpenChange(false); // ✅ closes dialog
-        },
         onError: (err) => {
-          alert(err.message || "Something went wrong.");
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
         },
       }
     );
