@@ -35,16 +35,15 @@ export function useCreateSalary() {
       // Get current month using local timezone
       const currentMonth = getCurrentMonth();
 
-      // Cancel outgoing refetches for both with and without month
-      await queryClient.cancelQueries({ queryKey: ["salary"] });
-      await queryClient.cancelQueries({ queryKey: ["salary", currentMonth] });
+      // Cancel outgoing refetches for all matching queries
+      await queryClient.cancelQueries({
+        predicate: (query) => query.queryKey[0] === "salary",
+      });
 
-      // Snapshot previous values
-      const previousSalaries = queryClient.getQueryData([
-        "salary",
-        currentMonth,
-      ]);
-      const previousSalariesAll = queryClient.getQueryData(["salary"]);
+      // Snapshot previous values for all salary queries
+      const allSalaryQueries = queryClient.getQueriesData({
+        queryKey: ["salary"],
+      });
 
       const tempId = `temp-${Date.now()}`;
       const optimisticSalary: SalaryWithCompany = {
@@ -58,32 +57,22 @@ export function useCreateSalary() {
         updatedAt: new Date(),
       };
 
-      // Optimistically update cache (with month)
-      queryClient.setQueryData(
-        ["salary", currentMonth],
+      // Optimistically update all salary caches (updates all matching queries at once)
+      queryClient.setQueriesData(
+        { queryKey: ["salary"] },
         (old: SalaryWithCompany[] | undefined) => {
           return [...(old || []), optimisticSalary];
         }
       );
 
-      // Also update the all-salaries query if it exists
-      queryClient.setQueryData(
-        ["salary"],
-        (old: SalaryWithCompany[] | undefined) => {
-          return [...(old || []), optimisticSalary];
-        }
-      );
-
-      return { previousSalaries, previousSalariesAll, month: currentMonth };
+      return { allSalaryQueries, month: currentMonth };
     },
     onError: (err, newSalary, context) => {
-      // Rollback on error
-      const month = context?.month;
-      if (context?.previousSalaries && month) {
-        queryClient.setQueryData(["salary", month], context.previousSalaries);
-      }
-      if (context?.previousSalariesAll) {
-        queryClient.setQueryData(["salary"], context.previousSalariesAll);
+      // Rollback on error - restore all query states
+      if (context?.allSalaryQueries) {
+        context.allSalaryQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: (data, variables, context) => {

@@ -27,19 +27,27 @@ export function useDeleteCategory() {
       return data;
     },
     onMutate: async (categoryId) => {
-      // Cancel outgoing refetches
+      // Cancel outgoing refetches for all possible query keys
       await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
       await queryClient.cancelQueries({ queryKey: ["item-expenses"] });
+      // Cancel month-specific queries (we'll update all matching queries)
+      await queryClient.cancelQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "category-with-budget" ||
+          query.queryKey[0] === "item-expenses",
+      });
 
-      // Snapshot previous values
-      const previousBudgets = queryClient.getQueryData([
-        "category-with-budget",
-      ]);
-      const previousExpenses = queryClient.getQueryData(["item-expenses"]);
+      // Snapshot previous values (we'll need to restore all)
+      const allBudgetQueries = queryClient.getQueriesData({
+        queryKey: ["category-with-budget"],
+      });
+      const allExpenseQueries = queryClient.getQueriesData({
+        queryKey: ["item-expenses"],
+      });
 
-      // Optimistically remove from budgets cache
-      queryClient.setQueryData(
-        ["category-with-budget"],
+      // Optimistically remove from all budget caches
+      queryClient.setQueriesData(
+        { queryKey: ["category-with-budget"] },
         (old: BudgetWithCategory[] | undefined) => {
           return (old || []).filter(
             (budget) => budget.categoryId !== categoryId
@@ -47,9 +55,9 @@ export function useDeleteCategory() {
         }
       );
 
-      // Optimistically remove related expenses
-      queryClient.setQueryData(
-        ["item-expenses"],
+      // Optimistically remove related expenses from all expense caches
+      queryClient.setQueriesData(
+        { queryKey: ["item-expenses"] },
         (old: ItemExpenses[] | undefined) => {
           return (old || []).filter(
             (expense) => expense.categoryId !== categoryId
@@ -57,22 +65,23 @@ export function useDeleteCategory() {
         }
       );
 
-      return { previousBudgets, previousExpenses };
+      return { allBudgetQueries, allExpenseQueries };
     },
     onError: (err, categoryId, context) => {
-      // Rollback on error
-      if (context?.previousBudgets) {
-        queryClient.setQueryData(
-          ["category-with-budget"],
-          context.previousBudgets
-        );
+      // Rollback on error - restore all query states
+      if (context?.allBudgetQueries) {
+        context.allBudgetQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
-      if (context?.previousExpenses) {
-        queryClient.setQueryData(["item-expenses"], context.previousExpenses);
+      if (context?.allExpenseQueries) {
+        context.allExpenseQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Refetch to ensure consistency
+      // Refetch to ensure consistency - invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
       queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
     },

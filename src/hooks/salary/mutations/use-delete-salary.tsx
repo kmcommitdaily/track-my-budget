@@ -26,30 +26,38 @@ export function useDeleteSalary() {
       return data;
     },
     onMutate: async (salaryId) => {
-      // Cancel outgoing refetches
+      // Cancel outgoing refetches for all possible query keys
       await queryClient.cancelQueries({ queryKey: ["salary"] });
+      // Cancel month-specific queries
+      await queryClient.cancelQueries({
+        predicate: (query) => query.queryKey[0] === "salary",
+      });
 
-      // Snapshot previous value
-      const previousSalaries = queryClient.getQueryData(["salary"]);
+      // Snapshot previous values for all salary queries
+      const allSalaryQueries = queryClient.getQueriesData({
+        queryKey: ["salary"],
+      });
 
-      // Optimistically remove from cache
-      queryClient.setQueryData(
-        ["salary"],
+      // Optimistically remove from all salary caches
+      queryClient.setQueriesData(
+        { queryKey: ["salary"] },
         (old: SalaryWithCompany[] | undefined) => {
           return (old || []).filter((salary) => salary.id !== salaryId);
         }
       );
 
-      return { previousSalaries };
+      return { allSalaryQueries };
     },
     onError: (err, salaryId, context) => {
-      // Rollback on error
-      if (context?.previousSalaries) {
-        queryClient.setQueryData(["salary"], context.previousSalaries);
+      // Rollback on error - restore all query states
+      if (context?.allSalaryQueries) {
+        context.allSalaryQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Refetch to ensure consistency
+      // Refetch to ensure consistency - invalidate all salary queries
       queryClient.invalidateQueries({ queryKey: ["salary"] });
     },
   });

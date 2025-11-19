@@ -35,20 +35,15 @@ export function useCreateCategory() {
       // Get current month using local timezone
       const currentMonth = getCurrentMonth();
 
-      // Cancel outgoing refetches for both with and without month
-      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      // Cancel outgoing refetches for all matching queries
       await queryClient.cancelQueries({
-        queryKey: ["category-with-budget", currentMonth],
+        predicate: (query) => query.queryKey[0] === "category-with-budget",
       });
 
-      // Snapshot previous values
-      const previousBudgets = queryClient.getQueryData([
-        "category-with-budget",
-        currentMonth,
-      ]);
-      const previousBudgetsAll = queryClient.getQueryData([
-        "category-with-budget",
-      ]);
+      // Snapshot previous values for all budget queries
+      const allBudgetQueries = queryClient.getQueriesData({
+        queryKey: ["category-with-budget"],
+      });
 
       const tempId = `temp-${Date.now()}`;
       const optimisticBudget: BudgetWithCategory = {
@@ -63,38 +58,22 @@ export function useCreateCategory() {
         updatedAt: new Date(),
       };
 
-      // Optimistically add to cache (with month)
-      queryClient.setQueryData(
-        ["category-with-budget", currentMonth],
+      // Optimistically add to all budget caches (updates all matching queries at once)
+      queryClient.setQueriesData(
+        { queryKey: ["category-with-budget"] },
         (old: BudgetWithCategory[] | undefined) => {
           return [...(old || []), optimisticBudget];
         }
       );
 
-      // Also update the all-budgets query if it exists
-      queryClient.setQueryData(
-        ["category-with-budget"],
-        (old: BudgetWithCategory[] | undefined) => {
-          return [...(old || []), optimisticBudget];
-        }
-      );
-
-      return { previousBudgets, previousBudgetsAll, month: currentMonth };
+      return { allBudgetQueries, month: currentMonth };
     },
     onError: (err, newCategory, context) => {
-      // Rollback on error
-      const month = context?.month;
-      if (context?.previousBudgets && month) {
-        queryClient.setQueryData(
-          ["category-with-budget", month],
-          context.previousBudgets
-        );
-      }
-      if (context?.previousBudgetsAll) {
-        queryClient.setQueryData(
-          ["category-with-budget"],
-          context.previousBudgetsAll
-        );
+      // Rollback on error - restore all query states
+      if (context?.allBudgetQueries) {
+        context.allBudgetQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: (data, variables, context) => {
