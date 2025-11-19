@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCategoryWithBudget } from "../../category/queries/use-category-with-budget";
+import { getSalariesAction } from "@/action/salary/get-salaries-action";
 
 export type Salary = {
   id: string;
@@ -15,15 +16,9 @@ export type Salary = {
  */
 export function useSalaries() {
   const { totalBudget } = useCategoryWithBudget();
-  const query = useQuery<Salary[], Error>({
+  const query = useQuery({
     queryKey: ["salary"],
-    queryFn: async () => {
-      const response = await fetch("/api/finance");
-
-      if (!response.ok) throw new Error("Failed to fetch salary");
-      const data = await response.json();
-      return data.salaries as Salary[];
-    },
+    queryFn: getSalariesAction,
   });
 
   const totalIncome =

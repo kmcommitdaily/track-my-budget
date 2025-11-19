@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getItemExpensesAction } from "@/action/expenses/get-item-expenses-action";
 
 export type ItemExpenses = {
   id: string;
@@ -21,15 +22,7 @@ export type ItemExpenses = {
 export function useItemExpenses() {
   const query = useQuery<ItemExpenses[]>({
     queryKey: ["item-expenses"],
-    queryFn: async () => {
-      const response = await fetch("/api/expense");
-
-      if (!response.ok) throw new Error("Failed to fetch items expenses");
-
-      const data = await response.json();
-
-      return data.itemExpenses as ItemExpenses[];
-    },
+    queryFn: getItemExpensesAction,
   });
 
   const totalExpenses =
