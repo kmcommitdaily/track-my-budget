@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,18 +44,32 @@ export function ExpenseTable() {
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  // Filter expenses by categoryId
-  const filtered =
-    categoryFilter === "all"
-      ? items
-      : items.filter((item) => item.categoryId === categoryFilter);
-
-  const sorted = [...filtered].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  // Memoize filtered expenses to avoid recalculating on every render
+  const filtered = useMemo(
+    () =>
+      categoryFilter === "all"
+        ? items
+        : items.filter((item) => item.categoryId === categoryFilter),
+    [items, categoryFilter]
   );
 
-  const uniqueCategories = Array.from(
-    new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
+  // Memoize sorted expenses to avoid re-sorting on every render
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [filtered]
+  );
+
+  // Memoize unique categories to avoid recalculating on every render
+  const uniqueCategories = useMemo(
+    () =>
+      Array.from(
+        new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
+      ),
+    [items]
   );
 
   return (
