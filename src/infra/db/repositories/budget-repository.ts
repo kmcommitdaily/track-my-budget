@@ -3,7 +3,7 @@
  * Implements BudgetRepository port using Drizzle ORM
  */
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
@@ -137,7 +137,14 @@ export function createBudgetRepository(): BudgetRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db.delete(schema.budgetTable).where(eq(schema.budgetTable.id, id));
+      await db
+        .delete(schema.budgetTable)
+        .where(
+          and(
+            eq(schema.budgetTable.id, id),
+            eq(schema.budgetTable.user_id, userId)
+          )
+        );
       return true;
     },
   };

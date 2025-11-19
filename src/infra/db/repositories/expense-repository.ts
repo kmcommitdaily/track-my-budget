@@ -3,7 +3,7 @@
  * Implements ExpenseRepository port using Drizzle ORM
  */
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
@@ -108,7 +108,14 @@ export function createExpenseRepository(): ExpenseRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db.delete(schema.itemsTable).where(eq(schema.itemsTable.id, id));
+      await db
+        .delete(schema.itemsTable)
+        .where(
+          and(
+            eq(schema.itemsTable.id, id),
+            eq(schema.itemsTable.user_id, userId)
+          )
+        );
       return true;
     },
   };

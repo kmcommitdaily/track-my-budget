@@ -3,7 +3,7 @@
  * Implements CategoryRepository port using Drizzle ORM
  */
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import type { CategoryRepository } from "@/core/ports/category-repository";
@@ -70,7 +70,12 @@ export function createCategoryRepository(): CategoryRepository {
     delete: async (id: string, userId: string): Promise<boolean> => {
       await db
         .delete(schema.categoriesTable)
-        .where(eq(schema.categoriesTable.id, id));
+        .where(
+          and(
+            eq(schema.categoriesTable.id, id),
+            eq(schema.categoriesTable.user_id, userId)
+          )
+        );
 
       return true;
     },

@@ -83,7 +83,14 @@ export function createSalaryRepository(): SalaryRepository {
     },
 
     delete: async (id: string, userId: string): Promise<boolean> => {
-      await db.delete(schema.salaryTable).where(eq(schema.salaryTable.id, id));
+      await db
+        .delete(schema.salaryTable)
+        .where(
+          and(
+            eq(schema.salaryTable.id, id),
+            eq(schema.salaryTable.user_id, userId)
+          )
+        );
       return true;
     },
   };
