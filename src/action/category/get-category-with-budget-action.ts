@@ -1,6 +1,6 @@
 "use server";
-import { getSessionAction } from "@/action/auth/get-user-session-action";
-import { getBudget } from "@/db/repositories/budget";
+import { createDependencies } from "@/infra/dependencies";
+import { getCategoryWithBudget } from "@/core/use-cases";
 
 /**
  * Server Action to fetch category with budget data.
@@ -8,8 +8,11 @@ import { getBudget } from "@/db/repositories/budget";
  */
 export async function getCategoryWithBudgetAction() {
   try {
-    const session = await getSessionAction();
-    const budget = await getBudget(session.user.id);
+    const deps = createDependencies();
+    const budget = await getCategoryWithBudget({
+      budgetRepository: deps.budgetRepository,
+      authService: deps.authService,
+    });
     return budget;
   } catch (error) {
     console.error("Failed to fetch category with budget", error);

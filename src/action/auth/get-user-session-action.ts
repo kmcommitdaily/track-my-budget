@@ -1,9 +1,9 @@
 "use server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { createDependencies } from "@/infra/dependencies";
 
 export async function getSessionAction() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const deps = createDependencies();
+  const session = await deps.authService.getSession();
   if (!session) {
     throw new Error("Unauthorized");
   }
