@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SalaryWithCompany } from "@/core/ports/salary-repository";
+import { getCurrentMonth } from "@/utils/month-utils";
 
 export interface CreateSalaryInput {
   companyName: string;
@@ -31,42 +32,67 @@ export function useCreateSalary() {
       return response.json();
     },
     onMutate: async (newSalary) => {
-      // Cancel outgoing refetches to avoid overwriting optimistic update
+      // Get current month using local timezone
+      const currentMonth = getCurrentMonth();
+
+      // Cancel outgoing refetches for both with and without month
       await queryClient.cancelQueries({ queryKey: ["salary"] });
+      await queryClient.cancelQueries({ queryKey: ["salary", currentMonth] });
 
-      // Snapshot previous value for rollback
-      const previousSalaries = queryClient.getQueryData(["salary"]);
+      // Snapshot previous values
+      const previousSalaries = queryClient.getQueryData([
+        "salary",
+        currentMonth,
+      ]);
+      const previousSalariesAll = queryClient.getQueryData(["salary"]);
 
-      // Optimistically update cache with temporary data
+      const tempId = `temp-${Date.now()}`;
+      const optimisticSalary: SalaryWithCompany = {
+        id: tempId,
+        company: newSalary.companyName,
+        amount: newSalary.amount,
+        companyId: tempId,
+        userId: "",
+        month: currentMonth,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Optimistically update cache (with month)
       queryClient.setQueryData(
-        ["salary"],
+        ["salary", currentMonth],
         (old: SalaryWithCompany[] | undefined) => {
-          const tempId = `temp-${Date.now()}`;
-          const optimisticSalary: SalaryWithCompany = {
-            id: tempId,
-            company: newSalary.companyName,
-            amount: newSalary.amount,
-            companyId: tempId,
-            userId: "",
-            month: new Date().toISOString().slice(0, 7),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
           return [...(old || []), optimisticSalary];
         }
       );
 
-      return { previousSalaries };
+      // Also update the all-salaries query if it exists
+      queryClient.setQueryData(
+        ["salary"],
+        (old: SalaryWithCompany[] | undefined) => {
+          return [...(old || []), optimisticSalary];
+        }
+      );
+
+      return { previousSalaries, previousSalariesAll, month: currentMonth };
     },
     onError: (err, newSalary, context) => {
       // Rollback on error
-      if (context?.previousSalaries) {
-        queryClient.setQueryData(["salary"], context.previousSalaries);
+      const month = context?.month;
+      if (context?.previousSalaries && month) {
+        queryClient.setQueryData(["salary", month], context.previousSalaries);
+      }
+      if (context?.previousSalariesAll) {
+        queryClient.setQueryData(["salary"], context.previousSalariesAll);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       // Refetch to get server data (with proper IDs, etc.)
+      const month = context?.month;
       queryClient.invalidateQueries({ queryKey: ["salary"] });
+      if (month) {
+        queryClient.invalidateQueries({ queryKey: ["salary", month] });
+      }
     },
   });
 

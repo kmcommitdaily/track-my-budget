@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { BudgetWithCategory } from "@/core/ports/budget-repository";
+import { getCurrentMonth } from "@/utils/month-utils";
 
 export interface CreateCategoryInput {
   categoryTitle: string;
@@ -31,48 +32,80 @@ export function useCreateCategory() {
       return response.json();
     },
     onMutate: async (newCategory) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      // Get current month using local timezone
+      const currentMonth = getCurrentMonth();
 
-      // Snapshot previous value
+      // Cancel outgoing refetches for both with and without month
+      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      await queryClient.cancelQueries({
+        queryKey: ["category-with-budget", currentMonth],
+      });
+
+      // Snapshot previous values
       const previousBudgets = queryClient.getQueryData([
+        "category-with-budget",
+        currentMonth,
+      ]);
+      const previousBudgetsAll = queryClient.getQueryData([
         "category-with-budget",
       ]);
 
-      // Optimistically add to cache
+      const tempId = `temp-${Date.now()}`;
+      const optimisticBudget: BudgetWithCategory = {
+        id: tempId,
+        categoryId: tempId,
+        categoryTitle: newCategory.categoryTitle,
+        amount: newCategory.amount.toString(),
+        remainingAmount: newCategory.amount.toString(),
+        userId: "",
+        month: currentMonth,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Optimistically add to cache (with month)
       queryClient.setQueryData(
-        ["category-with-budget"],
+        ["category-with-budget", currentMonth],
         (old: BudgetWithCategory[] | undefined) => {
-          const tempId = `temp-${Date.now()}`;
-          const optimisticBudget: BudgetWithCategory = {
-            id: tempId,
-            categoryId: tempId,
-            categoryTitle: newCategory.categoryTitle,
-            amount: newCategory.amount.toString(),
-            remainingAmount: newCategory.amount.toString(),
-            userId: "",
-            month: new Date().toISOString().slice(0, 7),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
           return [...(old || []), optimisticBudget];
         }
       );
 
-      return { previousBudgets };
+      // Also update the all-budgets query if it exists
+      queryClient.setQueryData(
+        ["category-with-budget"],
+        (old: BudgetWithCategory[] | undefined) => {
+          return [...(old || []), optimisticBudget];
+        }
+      );
+
+      return { previousBudgets, previousBudgetsAll, month: currentMonth };
     },
     onError: (err, newCategory, context) => {
       // Rollback on error
-      if (context?.previousBudgets) {
+      const month = context?.month;
+      if (context?.previousBudgets && month) {
         queryClient.setQueryData(
-          ["category-with-budget"],
+          ["category-with-budget", month],
           context.previousBudgets
         );
       }
+      if (context?.previousBudgetsAll) {
+        queryClient.setQueryData(
+          ["category-with-budget"],
+          context.previousBudgetsAll
+        );
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       // Refetch to get server data
+      const month = context?.month;
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
+      if (month) {
+        queryClient.invalidateQueries({
+          queryKey: ["category-with-budget", month],
+        });
+      }
     },
   });
 

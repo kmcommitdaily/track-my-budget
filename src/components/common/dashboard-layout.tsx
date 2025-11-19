@@ -79,6 +79,7 @@ export function DashboardLayout({
       <AddExpenseDialog
         open={expenseDialogOpen}
         onOpenChange={setExpenseDialogOpen}
+        month={selectedMonth}
       />
     </div>
   );

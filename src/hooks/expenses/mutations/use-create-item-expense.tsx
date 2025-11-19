@@ -6,6 +6,12 @@ export interface CreateItemExpenseInput {
   itemName: string;
   categoryId: string;
   price: number;
+  month?: string; // YYYY-MM format for optimistic updates
+}
+
+export interface CreateItemExpenseOptions {
+  onError?: (error: Error) => void;
+  onSuccess?: () => void;
 }
 
 /**
@@ -19,10 +25,14 @@ export function useCreateItemExpense() {
 
   const mutation = useMutation({
     mutationFn: async (newItemExpense: CreateItemExpenseInput) => {
+      // Month is used in onMutate for optimistic updates, but not sent to API
+      // API uses current month by default
+      const { month, ...expenseData } = newItemExpense;
+      void month; // Month is intentionally not sent to API, used in onMutate
       const response = await fetch("/api/expense", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newItemExpense),
+        body: JSON.stringify(expenseData),
       });
 
       if (!response.ok) {
@@ -33,82 +43,145 @@ export function useCreateItemExpense() {
       return response.json();
     },
     onMutate: async (newItemExpense) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["item-expenses"] });
-      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      // Get month from input
+      const month = newItemExpense.month;
 
-      // Snapshot previous values
-      const previousExpenses = queryClient.getQueryData(["item-expenses"]);
+      // Cancel outgoing refetches for both with and without month
+      await queryClient.cancelQueries({ queryKey: ["item-expenses"] });
+      if (month) {
+        await queryClient.cancelQueries({ queryKey: ["item-expenses", month] });
+      }
+      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      if (month) {
+        await queryClient.cancelQueries({
+          queryKey: ["category-with-budget", month],
+        });
+      }
+
+      // Snapshot previous values for both query keys
+      const previousExpenses = queryClient.getQueryData([
+        "item-expenses",
+        month,
+      ]);
+      const previousExpensesAll = queryClient.getQueryData(["item-expenses"]);
       const previousBudgets = queryClient.getQueryData([
+        "category-with-budget",
+        month,
+      ]);
+      const previousBudgetsAll = queryClient.getQueryData([
         "category-with-budget",
       ]);
 
-      // Get category title from budgets cache
-      const budgets = (previousBudgets as BudgetWithCategory[]) || [];
+      // Get category title from budgets cache (try month-specific first, then all)
+      const budgets =
+        ((previousBudgets || previousBudgetsAll) as BudgetWithCategory[]) || [];
       const category = budgets.find(
         (b) => b.categoryId === newItemExpense.categoryId
       );
 
-      // Optimistically add to expenses cache
+      const tempId = `temp-${Date.now()}`;
+      const optimisticExpense: ItemExpenses = {
+        id: tempId,
+        itemName: newItemExpense.itemName,
+        price: newItemExpense.price,
+        categoryId: newItemExpense.categoryId,
+        budgetId: tempId,
+        categoryTitle: category?.categoryTitle || "",
+        budgetAmount: "0",
+        remainingBudget: "0",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Optimistically add to expenses cache (with month if provided)
+      if (month) {
+        queryClient.setQueryData(
+          ["item-expenses", month],
+          (old: ItemExpenses[] | undefined) => {
+            return [...(old || []), optimisticExpense];
+          }
+        );
+      }
+      // Also update the all-expenses query if it exists
       queryClient.setQueryData(
         ["item-expenses"],
         (old: ItemExpenses[] | undefined) => {
-          const tempId = `temp-${Date.now()}`;
-          const optimisticExpense: ItemExpenses = {
-            id: tempId,
-            itemName: newItemExpense.itemName,
-            price: newItemExpense.price,
-            categoryId: newItemExpense.categoryId,
-            budgetId: tempId,
-            categoryTitle: category?.categoryTitle || "",
-            budgetAmount: "0",
-            remainingBudget: "0",
-            createdAt: new Date().toISOString(),
-          };
           return [...(old || []), optimisticExpense];
         }
       );
 
-      // Optimistically update budget remaining amount
-      queryClient.setQueryData(
-        ["category-with-budget"],
-        (old: BudgetWithCategory[] | undefined) => {
-          return (old || []).map((budget) => {
-            if (budget.categoryId === newItemExpense.categoryId) {
-              const currentRemaining = Number(
-                budget.remainingAmount || budget.amount
-              );
-              return {
-                ...budget,
-                remainingAmount: Math.max(
-                  0,
-                  currentRemaining - newItemExpense.price
-                ).toString(),
-              };
-            }
-            return budget;
-          });
-        }
-      );
+      // Optimistically update budget remaining amount (with month if provided)
+      const updateBudget = (old: BudgetWithCategory[] | undefined) => {
+        return (old || []).map((budget) => {
+          if (budget.categoryId === newItemExpense.categoryId) {
+            const currentRemaining = Number(
+              budget.remainingAmount || budget.amount
+            );
+            return {
+              ...budget,
+              remainingAmount: Math.max(
+                0,
+                currentRemaining - newItemExpense.price
+              ).toString(),
+            };
+          }
+          return budget;
+        });
+      };
 
-      return { previousExpenses, previousBudgets };
+      if (month) {
+        queryClient.setQueryData(["category-with-budget", month], updateBudget);
+      }
+      queryClient.setQueryData(["category-with-budget"], updateBudget);
+
+      return {
+        previousExpenses,
+        previousExpensesAll,
+        previousBudgets,
+        previousBudgetsAll,
+        month,
+      };
     },
     onError: (err, newItemExpense, context) => {
       // Rollback on error
-      if (context?.previousExpenses) {
-        queryClient.setQueryData(["item-expenses"], context.previousExpenses);
-      }
-      if (context?.previousBudgets) {
+      const month = context?.month;
+      if (context?.previousExpenses && month) {
         queryClient.setQueryData(
-          ["category-with-budget"],
+          ["item-expenses", month],
+          context.previousExpenses
+        );
+      }
+      if (context?.previousExpensesAll) {
+        queryClient.setQueryData(
+          ["item-expenses"],
+          context.previousExpensesAll
+        );
+      }
+      if (context?.previousBudgets && month) {
+        queryClient.setQueryData(
+          ["category-with-budget", month],
           context.previousBudgets
         );
       }
+      if (context?.previousBudgetsAll) {
+        queryClient.setQueryData(
+          ["category-with-budget"],
+          context.previousBudgetsAll
+        );
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       // Refetch to get server data
+      const month = context?.month;
       queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
+      if (month) {
+        queryClient.invalidateQueries({ queryKey: ["item-expenses", month] });
+      }
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
+      if (month) {
+        queryClient.invalidateQueries({
+          queryKey: ["category-with-budget", month],
+        });
+      }
     },
   });
 

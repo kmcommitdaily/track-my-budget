@@ -27,11 +27,13 @@ import { useCreateItemExpense } from "@/hooks/expenses/mutations/use-create-item
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  month?: string; // YYYY-MM format for optimistic updates
 }
 
 export function AddExpenseDialog({
   open,
   onOpenChange,
+  month,
 }: AddExpenseDialogProps) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -98,6 +100,7 @@ export function AddExpenseDialog({
         itemName: titleToSubmit,
         categoryId: categoryIdToSubmit,
         price: expenseAmountToSubmit,
+        month, // Pass month for optimistic updates
       },
       {
         onError: (err) => {
