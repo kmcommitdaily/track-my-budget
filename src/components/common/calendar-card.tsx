@@ -1,34 +1,40 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Notepad } from '@/components/common/notepad';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Notepad } from "@/components/common/notepad";
+import { useEffect, useState } from "react";
 
 async function getUserId(): Promise<string> {
-  const res = await fetch('/api/user');
+  const res = await fetch("/api/user");
   const data = await res.json();
-  return data.user?.id ?? 'guest';
+  return data.user?.id ?? "guest";
 }
 
-export function CalendarCard() {
+interface CalendarCardProps {
+  onMonthChange?: (month: string) => void; // YYYY-MM format
+}
+
+export function CalendarCard({ onMonthChange }: CalendarCardProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(true); // Loading state for user ID fetch
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [formattedDate, setFormattedDate] = useState<string>(
+    formatDate(selectedDate)
+  );
 
   useEffect(() => {
-    // Fetch user ID on component mount
     getUserId().then((id) => {
       setUserId(id);
-      setIsLoading(false); // Stop loading once user ID is set
+      setIsLoading(false);
     });
   }, []);
 
   useEffect(() => {
-    if (!userId) return; // Don't attempt to load notes without a user ID
+    if (!userId) return;
 
-    // Load notes from localStorage when userId is available
     const stored = localStorage.getItem(`notepad-${userId}`);
     if (stored) {
       try {
@@ -37,11 +43,23 @@ export function CalendarCard() {
         setNotes({});
       }
     }
-  }, [userId]); // Only run when userId changes
+  }, [userId]);
 
-  // Handle note change
+  useEffect(() => {
+    setFormattedDate(formatDate(selectedDate)); // Update formatted date when selectedDate changes
+
+    // Emit month change when date selection changes
+    // Use local timezone to avoid UTC conversion issues (e.g., Jan 1st becoming Dec 31st in UTC)
+    if (onMonthChange) {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, "0"); // getMonth() returns 0-11, so add 1
+      const monthString = `${year}-${month}`; // YYYY-MM format
+      onMonthChange(monthString);
+    }
+  }, [selectedDate, onMonthChange]);
+
   const currentKey = selectedDate.toDateString();
-  const currentNote = notes[currentKey] || '';
+  const currentNote = notes[currentKey] || "";
 
   const handleNoteChange = (val: string) => {
     if (!userId) return;
@@ -52,22 +70,32 @@ export function CalendarCard() {
       return updated;
     });
   };
-
+  function formatDate(date: Date): string {
+    return date.toLocaleString("default", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
   // Avoid displaying notes until userId is set
   if (isLoading) {
-    return <div>Loading...</div>; // You can replace this with a loading spinner
+    return <div>Loading...</div>;
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calendar</CardTitle>
+        <CardTitle>Calendar - {formattedDate}</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-around gap-3">
         <Calendar
           mode="single"
           selected={selectedDate}
-          onSelect={(date) => date && setSelectedDate(date)}
+          onSelect={(date) => {
+            if (date) {
+              setSelectedDate(date);
+            }
+          }}
           className="rounded-md border"
         />
         <Notepad value={currentNote} onChange={handleNoteChange} />

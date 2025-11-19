@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type React from 'react';
+import type React from "react";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,16 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useSalaries } from '@/hooks/use-salaries';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useSalaries } from "@/hooks/salary/queries/use-salaries";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
+import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
+import { useCreateCategory } from "@/hooks/category/mutations/use-create-category";
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -29,14 +30,14 @@ export function AddCategoryDialog({
   open,
   onOpenChange,
 }: AddCategoryDialogProps) {
-  const [title, setTitle] = useState('');
-  const [budget, setBudget] = useState('');
+  const [title, setTitle] = useState("");
+  const [budget, setBudget] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const { totalIncome, remainingIncome } = useSalaries();
 
-  const { createCategory, isCreating, createError, totalBudget } =
-    useCategoryWithBudget();
+  const { totalBudget } = useCategoryWithBudget();
+  const { createCategory, isCreating, createError } = useCreateCategory();
 
   const validateAndSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,17 +45,15 @@ export function AddCategoryDialog({
 
     const budgetAmount = Number.parseFloat(budget);
     if (totalIncome <= 0) {
-      setError('You need to add income before creating a budget category.');
+      setError("You need to add income before creating a budget category.");
       return;
     }
 
     if (isNaN(budgetAmount) || budgetAmount <= 0) {
-      setError('Please enter a valid budget amount greater than zero.');
+      setError("Please enter a valid budget amount greater than zero.");
       return;
     }
 
-
-   
     if (budgetAmount > remainingIncome) {
       setError(
         `Budget exceeds remaining income. You have $${remainingIncome.toLocaleString()} available.`
@@ -62,17 +61,22 @@ export function AddCategoryDialog({
       return;
     }
 
-    createCategory(
-      { categoryTitle: title, amount: budgetAmount },
-      {
-        onSuccess: () => {
-          setTitle('');
-          setBudget('');
-          onOpenChange(false);
-        },
+    // Close dialog immediately - optimistic updates handle UI
+    const titleToSubmit = title;
+    const budgetToSubmit = budgetAmount;
+    setTitle("");
+    setBudget("");
+    onOpenChange(false);
 
+    createCategory(
+      { categoryTitle: titleToSubmit, amount: budgetToSubmit },
+      {
         onError: (err) => {
-          setError(err.message || 'Something went wrong. Try again');
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
         },
       }
     );
@@ -89,7 +93,6 @@ export function AddCategoryDialog({
         </DialogHeader>
 
         <form onSubmit={validateAndSubmit}>
-          {isCreating && <p>Adding category...</p>}
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />

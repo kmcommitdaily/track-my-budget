@@ -1,13 +1,13 @@
 // Sidebar.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { AddIncomeDialog } from '../common/add-income-dialog';
-import { AddCategoryDialog } from '../common/add-category-dialog';
+import { useState } from "react";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { AddIncomeDialog } from "../common/add-income-dialog";
+import { AddCategoryDialog } from "../common/add-category-dialog";
 // import { Switch } from '@/components/ui/switch';
 // import { Label } from '@/components/ui/label';
 import {
@@ -19,10 +19,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
+} from "../ui/alert-dialog";
 
-import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
-import { useSalaries } from '@/hooks/use-salaries';
+import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
+import { useDeleteCategory } from "@/hooks/category/mutations/use-delete-category";
+import { useSalaries } from "@/hooks/salary/queries/use-salaries";
+import { useDeleteSalary } from "@/hooks/salary/mutations/use-delete-salary";
 
 interface SidebarProps {
   open: boolean;
@@ -34,7 +36,7 @@ export function Sidebar({ open }: SidebarProps) {
   // const [showRemaining, setShowRemaining] = useState(true);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [deleteItemType, setDeleteItemType] = useState<
-    'income' | 'category' | null
+    "income" | "category" | null
   >(null);
   const [showWarning, setShowWarning] = useState<string | null>(null);
 
@@ -42,23 +44,25 @@ export function Sidebar({ open }: SidebarProps) {
     data: budgets,
     isLoading: isBudgetLoading,
     error: budgetError,
-    deleteCategory,
   } = useCategoryWithBudget();
+
+  const { deleteCategory } = useDeleteCategory();
 
   const {
     data: income,
     isLoading: isIncomeLoading,
     error: incomeError,
-    deleteSalary,
   } = useSalaries();
+
+  const { deleteSalary } = useDeleteSalary();
 
   const resetDeleteState = () => {
     setDeleteItemId(null);
     setDeleteItemType(null);
   };
 
-  const handleDeleteClick = (id: string, type: 'income' | 'category') => {
-    if (type === 'income' && income) {
+  const handleDeleteClick = (id: string, type: "income" | "category") => {
+    if (type === "income" && income) {
       const remainingIncome = income
         .filter((i) => i.id !== id)
         .reduce((sum, i) => sum + i.amount, 0);
@@ -68,7 +72,7 @@ export function Sidebar({ open }: SidebarProps) {
 
       if (remainingIncome < totalBudget) {
         setShowWarning(
-          '⚠️ Your income will be less than your budget if you delete this. Fix your budget first.'
+          "⚠️ Your income will be less than your budget if you delete this. Fix your budget first."
         );
         return;
       }
@@ -88,12 +92,11 @@ export function Sidebar({ open }: SidebarProps) {
   const handleConfirmDelete = () => {
     if (!deleteItemId || !deleteItemType) return;
 
-
-    if (deleteItemType === 'income') {
+    if (deleteItemType === "income") {
       deleteSalary(deleteItemId, {
         onSuccess: resetDeleteState,
       });
-    } else if (deleteItemType === 'category') {
+    } else if (deleteItemType === "category") {
       deleteCategory(deleteItemId, {
         onSuccess: resetDeleteState,
       });
@@ -104,8 +107,9 @@ export function Sidebar({ open }: SidebarProps) {
     <>
       <aside
         className={`fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r bg-background transition-transform duration-300 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        } h-screen`}>
+          open ? "translate-x-0" : "-translate-x-full"
+        } h-screen`}
+      >
         <div className="border-b p-4">
           <h2 className="text-lg font-semibold">Dashboard</h2>
         </div>
@@ -119,7 +123,8 @@ export function Sidebar({ open }: SidebarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIncomeDialogOpen(true)}>
+                  onClick={() => setIncomeDialogOpen(true)}
+                >
                   <PlusCircle className="h-4 w-4" />
                   <span className="sr-only">Add Income</span>
                 </Button>
@@ -130,7 +135,8 @@ export function Sidebar({ open }: SidebarProps) {
                   {income.map((inc) => (
                     <div
                       key={inc.id}
-                      className="rounded-md border p-3 relative group">
+                      className="rounded-md border p-3 relative group"
+                    >
                       <div className="font-medium">{inc.company}</div>
                       <div className="text-sm text-muted-foreground">
                         ₱{inc.amount.toLocaleString()}
@@ -139,7 +145,8 @@ export function Sidebar({ open }: SidebarProps) {
                         variant="ghost"
                         size="icon"
                         className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDeleteClick(inc.id, 'income')}>
+                        onClick={() => handleDeleteClick(inc.id, "income")}
+                      >
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
                     </div>
@@ -169,7 +176,8 @@ export function Sidebar({ open }: SidebarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCategoryDialogOpen(true)}>
+                  onClick={() => setCategoryDialogOpen(true)}
+                >
                   <PlusCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -191,7 +199,8 @@ export function Sidebar({ open }: SidebarProps) {
                   {budgets.map((budget) => (
                     <div
                       key={budget.id}
-                      className="rounded-md border p-3 relative group">
+                      className="rounded-md border p-3 relative group"
+                    >
                       <div className="font-medium">{budget.categoryTitle}</div>
                       <div className="text-sm text-muted-foreground">
                         Budget: ₱{Number(budget.amount).toLocaleString()}
@@ -207,8 +216,9 @@ export function Sidebar({ open }: SidebarProps) {
                         size="icon"
                         className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() =>
-                          handleDeleteClick(budget.categoryId, 'category')
-                        }>
+                          handleDeleteClick(budget.categoryId, "category")
+                        }
+                      >
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
                     </div>
@@ -243,21 +253,23 @@ export function Sidebar({ open }: SidebarProps) {
 
       <AlertDialog
         open={!!deleteItemId}
-        onOpenChange={(open) => !open && resetDeleteState()}>
+        onOpenChange={(open) => !open && resetDeleteState()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteItemType === 'income'
-                ? 'This will delete this income source.'
-                : 'This will delete this category and all associated expenses.'}
+              {deleteItemType === "income"
+                ? "This will delete this income source."
+                : "This will delete this category and all associated expenses."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive text-white">
+              variant="destructive"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -266,7 +278,8 @@ export function Sidebar({ open }: SidebarProps) {
 
       <AlertDialog
         open={!!showWarning}
-        onOpenChange={(open) => !open && setShowWarning(null)}>
+        onOpenChange={(open) => !open && setShowWarning(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Heads up</AlertDialogTitle>

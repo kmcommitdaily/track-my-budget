@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { format } from 'date-fns';
-import { AlertTriangle, Trash2, Filter } from 'lucide-react';
+import { format } from "date-fns";
+import { AlertTriangle, Trash2, Filter } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -9,9 +9,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,39 +21,59 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { useItemExpenses } from '@/hooks/use-item-expenses';
+} from "../ui/select";
+import { useItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
+import { useDeleteItemExpense } from "@/hooks/expenses/mutations/use-delete-item-expense";
 
-export function ExpenseTable() {
-  const { data: items = [], deleteItemExpenses } = useItemExpenses();
+interface ExpenseTableProps {
+  month?: string; // YYYY-MM format
+}
+
+export function ExpenseTable({ month }: ExpenseTableProps) {
+  const { data: items = [] } = useItemExpenses(month);
+  const { deleteItemExpense } = useDeleteItemExpense();
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  // Filter expenses by categoryId
-  const filtered =
-    categoryFilter === 'all'
-      ? items
-      : items.filter((item) => item.categoryId === categoryFilter);
-
-  const sorted = [...filtered].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  // Memoize filtered expenses to avoid recalculating on every render
+  const filtered = useMemo(
+    () =>
+      categoryFilter === "all"
+        ? items
+        : items.filter((item) => item.categoryId === categoryFilter),
+    [items, categoryFilter]
   );
 
-  const uniqueCategories = Array.from(
-    new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
+  // Memoize sorted expenses to avoid re-sorting on every render
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [filtered]
+  );
+
+  // Memoize unique categories to avoid recalculating on every render
+  const uniqueCategories = useMemo(
+    () =>
+      Array.from(
+        new Map(items.map((i) => [i.categoryId, i.categoryTitle])).entries()
+      ),
+    [items]
   );
 
   return (
@@ -98,14 +118,15 @@ export function ExpenseTable() {
                 return (
                   <TableRow
                     key={item.id}
-                    className={isBudgetExceeded ? 'bg-destructive/10' : ''}>
+                    className={isBudgetExceeded ? "bg-destructive/10" : ""}
+                  >
                     <TableCell>
                       {item.createdAt
-                        ? format(new Date(item.createdAt), 'MMM d, yyyy')
-                        : '—'}
+                        ? format(new Date(item.createdAt), "MMM d, yyyy")
+                        : "—"}
                     </TableCell>
                     <TableCell>{item.itemName}</TableCell>
-                    <TableCell>{item.categoryTitle || 'Unknown'}</TableCell>
+                    <TableCell>{item.categoryTitle || "Unknown"}</TableCell>
                     <TableCell>₱{item.price.toLocaleString()}</TableCell>
                     <TableCell>
                       {isBudgetExceeded && (
@@ -132,7 +153,8 @@ export function ExpenseTable() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => setDeleteExpenseId(item.id)}>
+                        onClick={() => setDeleteExpenseId(item.id)}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                         <span className="sr-only">Delete Expense</span>
                       </Button>
@@ -144,10 +166,11 @@ export function ExpenseTable() {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center py-6 text-muted-foreground">
+                  className="text-center py-6 text-muted-foreground"
+                >
                   {items.length === 0
-                    ? 'No expenses added yet.'
-                    : 'No expenses found for the selected category.'}
+                    ? "No expenses added yet."
+                    : "No expenses found for the selected category."}
                 </TableCell>
               </TableRow>
             )}
@@ -157,7 +180,8 @@ export function ExpenseTable() {
 
       <AlertDialog
         open={!!deleteExpenseId}
-        onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
+        onOpenChange={(open) => !open && setDeleteExpenseId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -170,11 +194,15 @@ export function ExpenseTable() {
             <AlertDialogAction
               onClick={() => {
                 if (deleteExpenseId) {
-                  deleteItemExpenses(deleteExpenseId);
-                  setDeleteExpenseId(null);
+                  deleteItemExpense(deleteExpenseId, {
+                    onSuccess: () => {
+                      setDeleteExpenseId(null);
+                    },
+                  });
                 }
               }}
-              className="bg-destructive text-destructive-foreground">
+              variant="destructive"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

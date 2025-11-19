@@ -1,14 +1,18 @@
-// /app/api/me/route.ts
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { NextResponse } from "next/server";
+import { createDependencies } from "@/infra/dependencies";
 
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  try {
+    const deps = createDependencies();
+    const session = await deps.authService.getSession();
 
-  if (!session) {
+    if (!session) {
+      return NextResponse.json({ user: null });
+    }
+
+    return NextResponse.json({ user: session.user });
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ user: null });
   }
-
-  return NextResponse.json({ user: session.user });
 }

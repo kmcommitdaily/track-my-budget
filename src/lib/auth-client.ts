@@ -5,5 +5,4 @@ export const authClient = createAuthClient({
   // Your app's base URL
 });
 
-// Export auth functions for easy use
 export const { signIn, signOut, useSession } = authClient;

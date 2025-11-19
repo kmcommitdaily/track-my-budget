@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,39 +8,41 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCategoryWithBudget } from '@/hooks/use-category-with-budget';
-import { useItemExpenses } from '@/hooks/use-item-expenses';
+} from "@/components/ui/select";
+import { AlertCircle, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
+import { useCreateItemExpense } from "@/hooks/expenses/mutations/use-create-item-expense";
 
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  month?: string; // YYYY-MM format for optimistic updates
 }
 
 export function AddExpenseDialog({
   open,
   onOpenChange,
+  month,
 }: AddExpenseDialogProps) {
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
   const { data: categories, remainingBudget } = useCategoryWithBudget();
-  const { createItemExpenses } = useItemExpenses();
+  const { createItemExpense } = useCreateItemExpense();
 
   const selectedCategory = categories?.find((c) => c.categoryId === categoryId);
   // const remainingBudget = selectedCategory
@@ -49,9 +51,9 @@ export function AddExpenseDialog({
 
   useEffect(() => {
     if (!open) {
-      setTitle('');
-      setAmount('');
-      setCategoryId('');
+      setTitle("");
+      setAmount("");
+      setCategoryId("");
       setError(null);
       setWarning(null);
     }
@@ -65,12 +67,12 @@ export function AddExpenseDialog({
     const expenseAmount = Number.parseFloat(amount);
 
     if (!categoryId) {
-      setError('Please select a category.');
+      setError("Please select a category.");
       return;
     }
 
     if (isNaN(expenseAmount) || expenseAmount <= 0) {
-      setError('Please enter a valid amount greater than zero.');
+      setError("Please enter a valid amount greater than zero.");
       return;
     }
 
@@ -82,18 +84,34 @@ export function AddExpenseDialog({
       );
     }
 
-    createItemExpenses({
-      itemName: title,
-      categoryId,
-      price: expenseAmount,
-    });
-
-    setTitle('');
-    setAmount('');
-    setCategoryId('');
+    // Close dialog immediately - optimistic updates handle UI
+    const titleToSubmit = title;
+    const categoryIdToSubmit = categoryId;
+    const expenseAmountToSubmit = expenseAmount;
+    setTitle("");
+    setAmount("");
+    setCategoryId("");
     setError(null);
     setWarning(null);
     onOpenChange(false);
+
+    createItemExpense(
+      {
+        itemName: titleToSubmit,
+        categoryId: categoryIdToSubmit,
+        price: expenseAmountToSubmit,
+        month, // Pass month for optimistic updates
+      },
+      {
+        onError: (err) => {
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
+        },
+      }
+    );
   };
 
   return (
@@ -117,7 +135,8 @@ export function AddExpenseDialog({
           {warning && (
             <Alert
               variant="destructive"
-              className="mb-4 border-warning bg-warning/20">
+              className="mb-4 border-warning bg-warning/20"
+            >
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="text-warning-foreground">
                 {warning}
@@ -146,7 +165,8 @@ export function AddExpenseDialog({
                   setError(null);
                   setWarning(null);
                 }}
-                required>
+                required
+              >
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
@@ -155,9 +175,10 @@ export function AddExpenseDialog({
                     categories.map((category) => (
                       <SelectItem
                         key={category.categoryId}
-                        value={category.categoryId}>
+                        value={category.categoryId}
+                      >
                         {category.categoryTitle} (₱
-                        {Number(category.remainingAmount).toLocaleString()}{' '}
+                        {Number(category.remainingAmount).toLocaleString()}{" "}
                         left)
                       </SelectItem>
                     ))
@@ -197,7 +218,8 @@ export function AddExpenseDialog({
           <DialogFooter>
             <Button
               type="submit"
-              disabled={!categories || categories.length === 0}>
+              disabled={!categories || categories.length === 0}
+            >
               Add Expense
             </Button>
           </DialogFooter>

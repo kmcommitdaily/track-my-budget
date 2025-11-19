@@ -41,7 +41,7 @@ export default function LoginButton({
         return;
       }
 
-      // Fetch the session to check if login was successful
+
       const session = await authClient.getSession();
 
       if (!session) {

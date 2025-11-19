@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useState } from 'react';
+import type React from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useSalaries } from '@/hooks/use-salaries'; // ✅ use your query hook
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useCreateSalary } from "@/hooks/salary/mutations/use-create-salary";
 
 interface AddIncomeDialogProps {
   open: boolean;
@@ -20,32 +20,38 @@ interface AddIncomeDialogProps {
 }
 
 export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
-  const [company, setCompany] = useState('');
-  const [amount, setAmount] = useState('');
+  const [company, setCompany] = useState("");
+  const [amount, setAmount] = useState("");
 
-  const { createSalary, isCreating } = useSalaries(); // ✅ from query hook
+  const { createSalary, isCreating } = useCreateSalary();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!company.trim() || !amount.trim()) {
-      alert('❌ Please enter a valid company name and amount.');
+      alert("❌ Please enter a valid company name and amount.");
       return;
     }
 
+    // Close dialog immediately - optimistic updates handle UI
+    const companyToSubmit = company;
+    const amountToSubmit = parseFloat(amount);
+    setCompany("");
+    setAmount("");
+    onOpenChange(false);
+
     createSalary(
       {
-        companyName: company,
-        amount: parseFloat(amount),
+        companyName: companyToSubmit,
+        amount: amountToSubmit,
       },
       {
-        onSuccess: () => {
-          setCompany('');
-          setAmount('');
-          onOpenChange(false); // ✅ closes dialog
-        },
         onError: (err) => {
-          alert(err.message || 'Something went wrong.');
+          // Show error notification if server request fails
+          // Optimistic update will automatically rollback
+          alert(
+            err.message || "Something went wrong. The change was reverted."
+          );
         },
       }
     );
@@ -88,7 +94,7 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
 
           <DialogFooter>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? 'Adding...' : 'Add Income'}
+              {isCreating ? "Adding..." : "Add Income"}
             </Button>
           </DialogFooter>
         </form>
