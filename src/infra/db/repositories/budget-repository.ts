@@ -40,20 +40,35 @@ export function createBudgetRepository(): BudgetRepository {
       return mapBudgetToEntity(row, totalExpenses);
     },
 
-    findByUserId: async (userId: string): Promise<BudgetWithCategory[]> => {
+    findByUserId: async (
+      userId: string,
+      month?: string
+    ): Promise<BudgetWithCategory[]> => {
+      // Build the remaining amount calculation with optional month filter for expenses
+      const remainingAmountSql = month
+        ? sql`
+            ${schema.budgetTable.amount} - COALESCE((
+              SELECT SUM(${schema.itemsTable.price})
+              FROM ${schema.itemsTable}
+              WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
+                AND ${schema.itemsTable.month} = ${month}
+            ), 0)
+          `
+        : sql`
+            ${schema.budgetTable.amount} - COALESCE((
+              SELECT SUM(${schema.itemsTable.price})
+              FROM ${schema.itemsTable}
+              WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
+            ), 0)
+          `;
+
       const rows = await db
         .select({
           id: schema.budgetTable.id,
           amount: schema.budgetTable.amount,
           categoryTitle: schema.categoriesTable.title,
           categoryId: schema.budgetTable.category_id,
-          remainingAmount: sql`
-            ${schema.budgetTable.amount} - COALESCE((
-              SELECT SUM(${schema.itemsTable.price})
-              FROM ${schema.itemsTable}
-              WHERE ${schema.itemsTable.budget_id} = ${schema.budgetTable.id}
-            ), 0)
-          `.as("remaining_amount"),
+          remainingAmount: remainingAmountSql.as("remaining_amount"),
           month: schema.budgetTable.month,
         })
         .from(schema.budgetTable)
@@ -61,7 +76,14 @@ export function createBudgetRepository(): BudgetRepository {
           schema.categoriesTable,
           eq(schema.categoriesTable.id, schema.budgetTable.category_id)
         )
-        .where(eq(schema.budgetTable.user_id, userId));
+        .where(
+          month
+            ? and(
+                eq(schema.budgetTable.user_id, userId),
+                eq(schema.budgetTable.month, month)
+              )
+            : eq(schema.budgetTable.user_id, userId)
+        );
 
       return rows.map((row) => ({
         id: row.id,

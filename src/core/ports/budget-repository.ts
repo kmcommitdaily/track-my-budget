@@ -19,7 +19,10 @@ export type BudgetWithCategory = {
 
 export type BudgetRepository = {
   findById: (id: string) => Promise<Budget | null>;
-  findByUserId: (userId: string) => Promise<BudgetWithCategory[]>;
+  findByUserId: (
+    userId: string,
+    month?: string
+  ) => Promise<BudgetWithCategory[]>;
   findByCategoryId: (categoryId: string) => Promise<Budget | null>;
   create: (budget: Budget) => Promise<Budget>;
   update: (budget: Budget) => Promise<Budget>;

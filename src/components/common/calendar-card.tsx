@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Notepad } from '@/components/common/notepad';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Notepad } from "@/components/common/notepad";
+import { useEffect, useState } from "react";
 
 async function getUserId(): Promise<string> {
-  const res = await fetch('/api/user');
+  const res = await fetch("/api/user");
   const data = await res.json();
-  return data.user?.id ?? 'guest';
+  return data.user?.id ?? "guest";
 }
 
-export function CalendarCard() {
+interface CalendarCardProps {
+  onMonthChange?: (month: string) => void; // YYYY-MM format
+}
+
+export function CalendarCard({ onMonthChange }: CalendarCardProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -43,10 +47,19 @@ export function CalendarCard() {
 
   useEffect(() => {
     setFormattedDate(formatDate(selectedDate)); // Update formatted date when selectedDate changes
-  }, [selectedDate]);
+
+    // Emit month change when date selection changes
+    // Use local timezone to avoid UTC conversion issues (e.g., Jan 1st becoming Dec 31st in UTC)
+    if (onMonthChange) {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, "0"); // getMonth() returns 0-11, so add 1
+      const monthString = `${year}-${month}`; // YYYY-MM format
+      onMonthChange(monthString);
+    }
+  }, [selectedDate, onMonthChange]);
 
   const currentKey = selectedDate.toDateString();
-  const currentNote = notes[currentKey] || '';
+  const currentNote = notes[currentKey] || "";
 
   const handleNoteChange = (val: string) => {
     if (!userId) return;
@@ -58,10 +71,10 @@ export function CalendarCard() {
     });
   };
   function formatDate(date: Date): string {
-    return date.toLocaleString('default', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
+    return date.toLocaleString("default", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   }
   // Avoid displaying notes until userId is set
@@ -78,7 +91,11 @@ export function CalendarCard() {
         <Calendar
           mode="single"
           selected={selectedDate}
-          onSelect={(date) => date && setSelectedDate(date)}
+          onSelect={(date) => {
+            if (date) {
+              setSelectedDate(date);
+            }
+          }}
           className="rounded-md border"
         />
         <Notepad value={currentNote} onChange={handleNoteChange} />

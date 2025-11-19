@@ -29,7 +29,10 @@ export function createExpenseRepository(): ExpenseRepository {
       return row ? mapExpenseToEntity(row) : null;
     },
 
-    findByUserId: async (userId: string): Promise<ExpenseWithDetails[]> => {
+    findByUserId: async (
+      userId: string,
+      month?: string
+    ): Promise<ExpenseWithDetails[]> => {
       const rows = await db
         .select({
           id: schema.itemsTable.id,
@@ -61,7 +64,14 @@ export function createExpenseRepository(): ExpenseRepository {
           schema.categoriesTable,
           eq(schema.itemsTable.category_id, schema.categoriesTable.id)
         )
-        .where(eq(schema.itemsTable.user_id, userId));
+        .where(
+          month
+            ? and(
+                eq(schema.itemsTable.user_id, userId),
+                eq(schema.itemsTable.month, month)
+              )
+            : eq(schema.itemsTable.user_id, userId)
+        );
 
       return rows.map((row) => {
         const createdAt = row.createdAt || new Date();
@@ -122,6 +132,25 @@ export function createExpenseRepository(): ExpenseRepository {
 
       // Return true only if a row was actually deleted
       return result.length > 0;
+    },
+
+    deleteByMonth: async (userId: string, month: string): Promise<number> => {
+      /**
+       * Deletes all expenses for a specific month and user.
+       * Categories and budgets are preserved (they have their own month fields).
+       * Returns the count of deleted expenses.
+       */
+      const result = await db
+        .delete(schema.itemsTable)
+        .where(
+          and(
+            eq(schema.itemsTable.user_id, userId),
+            eq(schema.itemsTable.month, month)
+          )
+        )
+        .returning({ id: schema.itemsTable.id });
+
+      return result.length;
     },
   };
 }

@@ -13,14 +13,16 @@ export type GetItemExpensesDependencies = {
 
 /**
  * Gets all expenses for the authenticated user
+ * @param month Optional month filter in YYYY-MM format. If not provided, returns all expenses.
  */
 export async function getItemExpensesUseCase(
-  deps: GetItemExpensesDependencies
+  deps: GetItemExpensesDependencies,
+  month?: string
 ) {
   const session = await deps.authService.getSession();
   if (!session) {
     throw new Error("Unauthorized");
   }
 
-  return await deps.expenseRepository.findByUserId(session.user.id);
+  return await deps.expenseRepository.findByUserId(session.user.id, month);
 }

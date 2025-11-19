@@ -268,7 +268,7 @@ export function Sidebar({ open }: SidebarProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
-              className="bg-destructive text-white"
+              variant="destructive"
             >
               Delete
             </AlertDialogAction>

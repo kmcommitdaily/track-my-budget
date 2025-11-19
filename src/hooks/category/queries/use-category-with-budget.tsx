@@ -6,12 +6,13 @@ import { getCategoryWithBudgetAction } from "@/action/category/get-category-with
  * Hook for fetching category with budget data.
  * Provides computed values for total and remaining budget.
  *
+ * @param month Optional month filter in YYYY-MM format. If not provided, returns all budgets.
  * @returns Query result with additional computed values (totalBudget, remainingBudget)
  */
-export function useCategoryWithBudget() {
+export function useCategoryWithBudget(month?: string) {
   const query = useQuery({
-    queryKey: ["category-with-budget"],
-    queryFn: getCategoryWithBudgetAction,
+    queryKey: ["category-with-budget", month],
+    queryFn: () => getCategoryWithBudgetAction(month),
   });
 
   const totalBudget =
