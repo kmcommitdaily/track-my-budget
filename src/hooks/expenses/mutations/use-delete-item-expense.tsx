@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { BudgetWithCategory } from "@/core/ports/budget-repository";
+import type { ItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 
 /**
  * Hook for deleting an item expense.
@@ -36,20 +38,23 @@ export function useDeleteItemExpense() {
       ]);
 
       // Find expense to get its price and categoryId
-      const expenses = (previousExpenses as any[]) || [];
+      const expenses = (previousExpenses as ItemExpenses[]) || [];
       const expenseToDelete = expenses.find((e) => e.id === itemExpenseId);
 
       // Optimistically remove from expenses cache
-      queryClient.setQueryData(["item-expenses"], (old: any[] = []) => {
-        return old.filter((expense) => expense.id !== itemExpenseId);
-      });
+      queryClient.setQueryData(
+        ["item-expenses"],
+        (old: ItemExpenses[] | undefined) => {
+          return (old || []).filter((expense) => expense.id !== itemExpenseId);
+        }
+      );
 
       // Optimistically update budget remaining amount
       if (expenseToDelete) {
         queryClient.setQueryData(
           ["category-with-budget"],
-          (old: any[] = []) => {
-            return old.map((budget) => {
+          (old: BudgetWithCategory[] | undefined) => {
+            return (old || []).map((budget) => {
               if (budget.categoryId === expenseToDelete.categoryId) {
                 const currentRemaining = Number(
                   budget.remainingAmount || budget.amount

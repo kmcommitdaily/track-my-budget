@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { BudgetWithCategory } from "@/core/ports/budget-repository";
+import type { ItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 
 export interface CreateItemExpenseInput {
   itemName: string;
@@ -42,20 +44,19 @@ export function useCreateItemExpense() {
       ]);
 
       // Get category title from budgets cache
-      const budgets = (previousBudgets as any[]) || [];
+      const budgets = (previousBudgets as BudgetWithCategory[]) || [];
       const category = budgets.find(
         (b) => b.categoryId === newItemExpense.categoryId
       );
 
       // Optimistically add to expenses cache
-      queryClient.setQueryData(["item-expenses"], (old: any[] = []) => {
-        const tempId = `temp-${Date.now()}`;
-        return [
-          ...old,
-          {
+      queryClient.setQueryData(
+        ["item-expenses"],
+        (old: ItemExpenses[] | undefined) => {
+          const tempId = `temp-${Date.now()}`;
+          const optimisticExpense: ItemExpenses = {
             id: tempId,
             itemName: newItemExpense.itemName,
-            name: newItemExpense.itemName,
             price: newItemExpense.price,
             categoryId: newItemExpense.categoryId,
             budgetId: tempId,
@@ -63,29 +64,32 @@ export function useCreateItemExpense() {
             budgetAmount: "0",
             remainingBudget: "0",
             createdAt: new Date().toISOString(),
-            quantity: 1,
-          },
-        ];
-      });
+          };
+          return [...(old || []), optimisticExpense];
+        }
+      );
 
       // Optimistically update budget remaining amount
-      queryClient.setQueryData(["category-with-budget"], (old: any[] = []) => {
-        return old.map((budget) => {
-          if (budget.categoryId === newItemExpense.categoryId) {
-            const currentRemaining = Number(
-              budget.remainingAmount || budget.amount
-            );
-            return {
-              ...budget,
-              remainingAmount: Math.max(
-                0,
-                currentRemaining - newItemExpense.price
-              ).toString(),
-            };
-          }
-          return budget;
-        });
-      });
+      queryClient.setQueryData(
+        ["category-with-budget"],
+        (old: BudgetWithCategory[] | undefined) => {
+          return (old || []).map((budget) => {
+            if (budget.categoryId === newItemExpense.categoryId) {
+              const currentRemaining = Number(
+                budget.remainingAmount || budget.amount
+              );
+              return {
+                ...budget,
+                remainingAmount: Math.max(
+                  0,
+                  currentRemaining - newItemExpense.price
+                ).toString(),
+              };
+            }
+            return budget;
+          });
+        }
+      );
 
       return { previousExpenses, previousBudgets };
     },

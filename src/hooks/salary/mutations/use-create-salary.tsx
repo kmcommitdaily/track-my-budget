@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SalaryWithCompany } from "@/core/ports/salary-repository";
 
 export interface CreateSalaryInput {
   companyName: string;
@@ -37,11 +38,11 @@ export function useCreateSalary() {
       const previousSalaries = queryClient.getQueryData(["salary"]);
 
       // Optimistically update cache with temporary data
-      queryClient.setQueryData(["salary"], (old: any[] = []) => {
-        const tempId = `temp-${Date.now()}`;
-        return [
-          ...old,
-          {
+      queryClient.setQueryData(
+        ["salary"],
+        (old: SalaryWithCompany[] | undefined) => {
+          const tempId = `temp-${Date.now()}`;
+          const optimisticSalary: SalaryWithCompany = {
             id: tempId,
             company: newSalary.companyName,
             amount: newSalary.amount,
@@ -50,9 +51,10 @@ export function useCreateSalary() {
             month: new Date().toISOString().slice(0, 7),
             createdAt: new Date(),
             updatedAt: new Date(),
-          },
-        ];
-      });
+          };
+          return [...(old || []), optimisticSalary];
+        }
+      );
 
       return { previousSalaries };
     },

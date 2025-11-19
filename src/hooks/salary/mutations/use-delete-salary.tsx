@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SalaryWithCompany } from "@/core/ports/salary-repository";
 
 /**
  * Hook for deleting a salary/income entry.
@@ -32,9 +33,12 @@ export function useDeleteSalary() {
       const previousSalaries = queryClient.getQueryData(["salary"]);
 
       // Optimistically remove from cache
-      queryClient.setQueryData(["salary"], (old: any[] = []) => {
-        return old.filter((salary) => salary.id !== salaryId);
-      });
+      queryClient.setQueryData(
+        ["salary"],
+        (old: SalaryWithCompany[] | undefined) => {
+          return (old || []).filter((salary) => salary.id !== salaryId);
+        }
+      );
 
       return { previousSalaries };
     },

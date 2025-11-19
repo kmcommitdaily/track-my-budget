@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { BudgetWithCategory } from "@/core/ports/budget-repository";
+import type { ItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 
 /**
  * Hook for deleting a category.
@@ -36,14 +38,24 @@ export function useDeleteCategory() {
       const previousExpenses = queryClient.getQueryData(["item-expenses"]);
 
       // Optimistically remove from budgets cache
-      queryClient.setQueryData(["category-with-budget"], (old: any[] = []) => {
-        return old.filter((budget) => budget.categoryId !== categoryId);
-      });
+      queryClient.setQueryData(
+        ["category-with-budget"],
+        (old: BudgetWithCategory[] | undefined) => {
+          return (old || []).filter(
+            (budget) => budget.categoryId !== categoryId
+          );
+        }
+      );
 
       // Optimistically remove related expenses
-      queryClient.setQueryData(["item-expenses"], (old: any[] = []) => {
-        return old.filter((expense) => expense.categoryId !== categoryId);
-      });
+      queryClient.setQueryData(
+        ["item-expenses"],
+        (old: ItemExpenses[] | undefined) => {
+          return (old || []).filter(
+            (expense) => expense.categoryId !== categoryId
+          );
+        }
+      );
 
       return { previousBudgets, previousExpenses };
     },

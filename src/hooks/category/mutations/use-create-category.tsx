@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { BudgetWithCategory } from "@/core/ports/budget-repository";
 
 export interface CreateCategoryInput {
   categoryTitle: string;
@@ -39,11 +40,11 @@ export function useCreateCategory() {
       ]);
 
       // Optimistically add to cache
-      queryClient.setQueryData(["category-with-budget"], (old: any[] = []) => {
-        const tempId = `temp-${Date.now()}`;
-        return [
-          ...old,
-          {
+      queryClient.setQueryData(
+        ["category-with-budget"],
+        (old: BudgetWithCategory[] | undefined) => {
+          const tempId = `temp-${Date.now()}`;
+          const optimisticBudget: BudgetWithCategory = {
             id: tempId,
             categoryId: tempId,
             categoryTitle: newCategory.categoryTitle,
@@ -53,9 +54,10 @@ export function useCreateCategory() {
             month: new Date().toISOString().slice(0, 7),
             createdAt: new Date(),
             updatedAt: new Date(),
-          },
-        ];
-      });
+          };
+          return [...(old || []), optimisticBudget];
+        }
+      );
 
       return { previousBudgets };
     },
