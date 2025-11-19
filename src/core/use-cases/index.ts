@@ -10,6 +10,7 @@ export * from "./create-budget";
 export * from "./get-item-expenses";
 export * from "./create-item-expense";
 export * from "./delete-item-expense";
+export * from "./clear-expenses-by-month";
 export * from "./get-salaries";
 export * from "./create-salary";
 export * from "./delete-salary";

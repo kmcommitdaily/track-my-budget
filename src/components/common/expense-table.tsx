@@ -38,8 +38,12 @@ import {
 import { useItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 import { useDeleteItemExpense } from "@/hooks/expenses/mutations/use-delete-item-expense";
 
-export function ExpenseTable() {
-  const { data: items = [] } = useItemExpenses();
+interface ExpenseTableProps {
+  month?: string; // YYYY-MM format
+}
+
+export function ExpenseTable({ month }: ExpenseTableProps) {
+  const { data: items = [] } = useItemExpenses(month);
   const { deleteItemExpense } = useDeleteItemExpense();
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -197,7 +201,7 @@ export function ExpenseTable() {
                   });
                 }
               }}
-              className="bg-destructive text-destructive-foreground"
+              variant="destructive"
             >
               Delete
             </AlertDialogAction>

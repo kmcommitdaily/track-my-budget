@@ -6,11 +6,23 @@ import { useSalaries } from "@/hooks/salary/queries/use-salaries";
 import { useCategoryWithBudget } from "@/hooks/category/queries/use-category-with-budget";
 import { useItemExpenses } from "@/hooks/expenses/queries/use-item-expenses";
 
-export function SummaryCard() {
-  const { totalIncome, remainingIncome } = useSalaries();
-  const { totalBudget, remainingBudget } = useCategoryWithBudget();
+interface SummaryCardProps {
+  month?: string; // YYYY-MM format
+}
 
-  const { totalExpenses } = useItemExpenses();
+export function SummaryCard({ month }: SummaryCardProps) {
+  // Income and total budget show all months (not filtered)
+  // Remaining budget is calculated using expenses from the selected month
+  const { totalIncome, remainingIncome } = useSalaries();
+
+  // Get all budgets for Total Budget calculation
+  const { totalBudget } = useCategoryWithBudget();
+
+  // Get budgets with month filter to calculate Remaining Budget correctly
+  // (remaining budget uses expenses filtered by month)
+  const { remainingBudget } = useCategoryWithBudget(month);
+
+  const { totalExpenses } = useItemExpenses(month);
 
   return (
     <Card>

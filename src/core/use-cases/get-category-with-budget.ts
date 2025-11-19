@@ -22,15 +22,20 @@ export type CategoryWithBudgetResult = {
 
 /**
  * Gets all categories with their budgets for the authenticated user
+ * @param month Optional month filter in YYYY-MM format. If not provided, returns all budgets.
  */
 export async function getCategoryWithBudget(
-  deps: GetCategoryWithBudgetDependencies
+  deps: GetCategoryWithBudgetDependencies,
+  month?: string
 ): Promise<CategoryWithBudgetResult[]> {
   const session = await deps.authService.getSession();
   if (!session) {
     throw new Error("Unauthorized");
   }
 
-  const budgets = await deps.budgetRepository.findByUserId(session.user.id);
+  const budgets = await deps.budgetRepository.findByUserId(
+    session.user.id,
+    month
+  );
   return budgets;
 }

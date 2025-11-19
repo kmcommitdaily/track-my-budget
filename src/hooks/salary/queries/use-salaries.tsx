@@ -12,13 +12,14 @@ export type Salary = {
  * Hook for fetching salary/income data.
  * Provides computed values for total income and remaining income.
  *
+ * @param month Optional month filter in YYYY-MM format. If not provided, returns all salaries.
  * @returns Query result with additional computed values (totalIncome, remainingIncome)
  */
-export function useSalaries() {
-  const { totalBudget } = useCategoryWithBudget();
+export function useSalaries(month?: string) {
+  const { totalBudget } = useCategoryWithBudget(month);
   const query = useQuery({
-    queryKey: ["salary"],
-    queryFn: getSalariesAction,
+    queryKey: ["salary", month],
+    queryFn: () => getSalariesAction(month),
   });
 
   const totalIncome =

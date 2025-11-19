@@ -17,12 +17,13 @@ export type ItemExpenses = {
  * Hook for fetching item expenses data.
  * Provides computed value for total expenses.
  *
+ * @param month Optional month filter in YYYY-MM format. If not provided, returns all expenses.
  * @returns Query result with additional computed value (totalExpenses)
  */
-export function useItemExpenses() {
+export function useItemExpenses(month?: string) {
   const query = useQuery<ItemExpenses[]>({
-    queryKey: ["item-expenses"],
-    queryFn: getItemExpensesAction,
+    queryKey: ["item-expenses", month],
+    queryFn: () => getItemExpensesAction(month),
   });
 
   const totalExpenses =
