@@ -1,85 +1,83 @@
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { createDependencies } from "@/infra/dependencies";
 import {
-  createSalary,
-  getSalaries,
-  deleteSalary,
-} from '@/db/repositories/finance'; // Ensure correct path
-import { headers } from 'next/headers';
+  getSalariesUseCase,
+  createSalaryUseCase,
+  deleteSalaryUseCase,
+} from "@/core/use-cases";
 
-// 🔹 Handle GET request to fetch salaries
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 🔹 Retrieve salaries from the database
-    const salaries = await getSalaries(session.user.id, month);
+    const deps = createDependencies();
+    const salaries = await getSalariesUseCase({
+      salaryRepository: deps.salaryRepository,
+      authService: deps.authService,
+    });
     return NextResponse.json({ success: true, salaries });
-  } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error(error);
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    const status = message === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    // 🔹 Retrieve the session from Better Auth
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 🔹 Parse request body
+    const deps = createDependencies();
     const { companyName, amount } = await req.json();
 
-    // 🔹 Validate input
-    if (!companyName?.trim() || typeof amount !== 'number' || amount <= 0) {
+    if (!companyName?.trim() || typeof amount !== "number" || amount <= 0) {
       return NextResponse.json(
         {
-          error: 'Invalid input. Company name and a valid amount are required.',
+          error: "Invalid input. Company name and a valid amount are required.",
         },
         { status: 400 }
       );
     }
 
-    // 🔹 Call the createSalary function
-    const salaryId = await createSalary(session.user.id, companyName, amount, month);
-
-    if (!salaryId) {
-      throw new Error('Failed to create salary.');
-    }
+    const salaryId = await createSalaryUseCase(
+      {
+        salaryRepository: deps.salaryRepository,
+        companyRepository: deps.companyRepository,
+        authService: deps.authService,
+      },
+      { companyName, amount }
+    );
 
     return NextResponse.json({ success: true, salaryId });
-  } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("Error creating salary:", error);
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    const status = message === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
 export async function DELETE(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const deps = createDependencies();
     const { salaryId } = await req.json();
 
     if (!salaryId) {
-      return NextResponse.json({ error: 'Missing salaryId' }, { status: 400 });
+      return NextResponse.json({ error: "Missing salaryId" }, { status: 400 });
     }
 
-    const result = await deleteSalary(salaryId, session.user.id);
+    const result = await deleteSalaryUseCase(
+      {
+        salaryRepository: deps.salaryRepository,
+        authService: deps.authService,
+      },
+      salaryId
+    );
 
     return NextResponse.json({ success: result });
-  } catch {
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  } catch (error) {
+    console.error("Error deleting salary:", error);
+    const message = error instanceof Error ? error.message : "Internal error";
+    const status = message === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
