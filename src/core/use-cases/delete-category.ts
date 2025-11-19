@@ -1,6 +1,9 @@
 /**
  * Delete Category Use Case
  * Application logic for deleting a category
+ *
+ * Optimized: Removed findById call - delete operation now validates ownership
+ * in a single database query, reducing latency from 2 round trips to 1.
  */
 
 import type { CategoryRepository } from "../ports/category-repository";
@@ -12,7 +15,10 @@ export type DeleteCategoryDependencies = {
 };
 
 /**
- * Deletes a category if it belongs to the authenticated user
+ * Deletes a category if it belongs to the authenticated user.
+ *
+ * Performance: Uses a single DELETE query with userId check instead of
+ * findById + delete (2 queries), reducing latency by ~50%.
  */
 export async function deleteCategoryUseCase(
   deps: DeleteCategoryDependencies,
@@ -27,14 +33,16 @@ export async function deleteCategoryUseCase(
     throw new Error("Category ID is required");
   }
 
-  const category = await deps.categoryRepository.findById(categoryId);
-  if (!category) {
-    throw new Error("Category not found");
+  // Delete with userId check in WHERE clause - single query operation
+  // Repository will return false if no rows were deleted (not found or unauthorized)
+  const deleted = await deps.categoryRepository.delete(
+    categoryId,
+    session.user.id
+  );
+
+  if (!deleted) {
+    throw new Error("Category not found or unauthorized");
   }
 
-  if (category.userId !== session.user.id) {
-    throw new Error("Unauthorized: category does not belong to user");
-  }
-
-  return await deps.categoryRepository.delete(categoryId, session.user.id);
+  return deleted;
 }

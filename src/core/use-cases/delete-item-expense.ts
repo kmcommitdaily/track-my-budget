@@ -1,6 +1,9 @@
 /**
  * Delete Item Expense Use Case
  * Application logic for deleting an expense/item
+ *
+ * Optimized: Removed findById call - delete operation now validates ownership
+ * in a single database query, reducing latency from 2 round trips to 1.
  */
 
 import type { ExpenseRepository } from "../ports/expense-repository";
@@ -12,7 +15,10 @@ export type DeleteItemExpenseDependencies = {
 };
 
 /**
- * Deletes an expense/item if it belongs to the authenticated user
+ * Deletes an expense/item if it belongs to the authenticated user.
+ *
+ * Performance: Uses a single DELETE query with userId check instead of
+ * findById + delete (2 queries), reducing latency by ~50%.
  */
 export async function deleteItemExpenseUseCase(
   deps: DeleteItemExpenseDependencies,
@@ -27,14 +33,16 @@ export async function deleteItemExpenseUseCase(
     throw new Error("Item expense ID is required");
   }
 
-  const expense = await deps.expenseRepository.findById(itemExpenseId);
-  if (!expense) {
-    throw new Error("Item expense not found");
+  // Delete with userId check in WHERE clause - single query operation
+  // Repository will return false if no rows were deleted (not found or unauthorized)
+  const deleted = await deps.expenseRepository.delete(
+    itemExpenseId,
+    session.user.id
+  );
+
+  if (!deleted) {
+    throw new Error("Item expense not found or unauthorized");
   }
 
-  if (expense.userId !== session.user.id) {
-    throw new Error("Unauthorized: item expense does not belong to user");
-  }
-
-  return await deps.expenseRepository.delete(itemExpenseId, session.user.id);
+  return deleted;
 }

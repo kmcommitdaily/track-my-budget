@@ -1,6 +1,9 @@
 /**
  * Delete Salary Use Case
  * Application logic for deleting a salary/income
+ *
+ * Optimized: Removed findById call - delete operation now validates ownership
+ * in a single database query, reducing latency from 2 round trips to 1.
  */
 
 import type { SalaryRepository } from "../ports/salary-repository";
@@ -12,7 +15,10 @@ export type DeleteSalaryDependencies = {
 };
 
 /**
- * Deletes a salary if it belongs to the authenticated user
+ * Deletes a salary if it belongs to the authenticated user.
+ *
+ * Performance: Uses a single DELETE query with userId check instead of
+ * findById + delete (2 queries), reducing latency by ~50%.
  */
 export async function deleteSalaryUseCase(
   deps: DeleteSalaryDependencies,
@@ -27,14 +33,13 @@ export async function deleteSalaryUseCase(
     throw new Error("Salary ID is required");
   }
 
-  const salary = await deps.salaryRepository.findById(salaryId);
-  if (!salary) {
-    throw new Error("Salary not found");
+  // Delete with userId check in WHERE clause - single query operation
+  // Repository will return false if no rows were deleted (not found or unauthorized)
+  const deleted = await deps.salaryRepository.delete(salaryId, session.user.id);
+
+  if (!deleted) {
+    throw new Error("Salary not found or unauthorized");
   }
 
-  if (salary.userId !== session.user.id) {
-    throw new Error("Unauthorized: salary does not belong to user");
-  }
-
-  return await deps.salaryRepository.delete(salaryId, session.user.id);
+  return deleted;
 }
