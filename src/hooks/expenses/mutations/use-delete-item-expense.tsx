@@ -13,6 +13,12 @@ export function useDeleteItemExpense() {
 
   const mutation = useMutation({
     mutationFn: async (itemExpenseId: string) => {
+      // If it's a temporary ID from optimistic update, skip server request
+      // The item was never actually created on the server
+      if (itemExpenseId.startsWith("temp-")) {
+        return { success: true, skipped: true };
+      }
+
       const response = await fetch("/api/expense", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +88,11 @@ export function useDeleteItemExpense() {
         );
       }
 
-      return { allExpenseQueries, allBudgetQueries };
+      return {
+        allExpenseQueries,
+        allBudgetQueries,
+        isTempId: itemExpenseId.startsWith("temp-"),
+      };
     },
     onError: (err, itemExpenseId, context) => {
       // Rollback on error - restore all query states
@@ -97,10 +107,13 @@ export function useDeleteItemExpense() {
         });
       }
     },
-    onSuccess: () => {
-      // Refetch to ensure consistency - invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
+    onSuccess: (data, variables, context) => {
+      // If it was a temp ID, we already removed it from cache, no need to refetch
+      // Otherwise, refetch to ensure consistency
+      if (!context?.isTempId) {
+        queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
+        queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
+      }
     },
   });
 
