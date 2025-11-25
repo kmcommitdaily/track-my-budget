@@ -27,32 +27,42 @@ export function useDeleteItemExpense() {
       return data;
     },
     onMutate: async (itemExpenseId) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["item-expenses"] });
-      await queryClient.cancelQueries({ queryKey: ["category-with-budget"] });
+      // Cancel outgoing refetches for all matching queries
+      await queryClient.cancelQueries({
+        predicate: (query) =>
+          query.queryKey[0] === "item-expenses" ||
+          query.queryKey[0] === "category-with-budget",
+      });
 
-      // Snapshot previous values
-      const previousExpenses = queryClient.getQueryData(["item-expenses"]);
-      const previousBudgets = queryClient.getQueryData([
-        "category-with-budget",
-      ]);
+      // Snapshot previous values for all queries
+      const allExpenseQueries = queryClient.getQueriesData({
+        queryKey: ["item-expenses"],
+      });
+      const allBudgetQueries = queryClient.getQueriesData({
+        queryKey: ["category-with-budget"],
+      });
 
       // Find expense to get its price and categoryId
-      const expenses = (previousExpenses as ItemExpenses[]) || [];
-      const expenseToDelete = expenses.find((e) => e.id === itemExpenseId);
+      // Search through all expense queries to find the expense
+      let expenseToDelete: ItemExpenses | undefined;
+      for (const [, data] of allExpenseQueries) {
+        const expenses = (data as ItemExpenses[]) || [];
+        expenseToDelete = expenses.find((e) => e.id === itemExpenseId);
+        if (expenseToDelete) break;
+      }
 
-      // Optimistically remove from expenses cache
-      queryClient.setQueryData(
-        ["item-expenses"],
+      // Optimistically remove from all expense caches
+      queryClient.setQueriesData(
+        { queryKey: ["item-expenses"] },
         (old: ItemExpenses[] | undefined) => {
           return (old || []).filter((expense) => expense.id !== itemExpenseId);
         }
       );
 
-      // Optimistically update budget remaining amount
+      // Optimistically update budget remaining amount in all budget caches
       if (expenseToDelete) {
-        queryClient.setQueryData(
-          ["category-with-budget"],
+        queryClient.setQueriesData(
+          { queryKey: ["category-with-budget"] },
           (old: BudgetWithCategory[] | undefined) => {
             return (old || []).map((budget) => {
               if (budget.categoryId === expenseToDelete.categoryId) {
@@ -72,22 +82,23 @@ export function useDeleteItemExpense() {
         );
       }
 
-      return { previousExpenses, previousBudgets };
+      return { allExpenseQueries, allBudgetQueries };
     },
     onError: (err, itemExpenseId, context) => {
-      // Rollback on error
-      if (context?.previousExpenses) {
-        queryClient.setQueryData(["item-expenses"], context.previousExpenses);
+      // Rollback on error - restore all query states
+      if (context?.allExpenseQueries) {
+        context.allExpenseQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
-      if (context?.previousBudgets) {
-        queryClient.setQueryData(
-          ["category-with-budget"],
-          context.previousBudgets
-        );
+      if (context?.allBudgetQueries) {
+        context.allBudgetQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Refetch to ensure consistency
+      // Refetch to ensure consistency - invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ["item-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["category-with-budget"] });
     },
